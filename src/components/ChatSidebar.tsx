@@ -35,12 +35,15 @@ export function ChatSidebar() {
       toast.error('标题不能为空');
       return;
     }
+
     try {
       await updateConversationTitle(conversation.id, editingTitle.trim());
       setEditingId(null);
       toast.success('重命名成功');
     } catch (error: any) {
       toast.error(error.message || '重命名失败');
+      // 发生错误时取消编辑状态
+      cancelEditing();
     }
   };
 

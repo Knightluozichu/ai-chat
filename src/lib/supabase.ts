@@ -1,6 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
 
-const supabaseUrl = 'https://fmqreoeqzqdaqdtgqzkc.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcXJlb2VxenFkYXFkdGdxemtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzMTc0NDcsImV4cCI6MjA1NDg5MzQ0N30.TtiwMoyWq2QWvmZNdzRMf3pf-DbCV6qaFS-uRnpEwu4';
+// 检查环境变量
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase 环境变量未配置');
+  toast.error('系统配置错误，请联系管理员');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-application-name': 'ai-chat'
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
+
+// 添加响应拦截器
+supabase.handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || '请求失败');
+  }
+  return response;
+};

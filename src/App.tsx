@@ -6,6 +6,16 @@ import { useChatStore } from './store/chatStore';
 import { Auth } from './components/Auth';
 import { ChatSidebar } from './components/ChatSidebar';
 
+// 全局错误处理
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('Global error:', { message, source, lineno, colno, error });
+  return false;
+};
+
+window.onunhandledrejection = function(event) {
+  console.error('Unhandled rejection:', event.reason);
+};
+
 function App() {
   const { user, loading, checkAuth, signOut } = useAuthStore();
   const {
@@ -13,6 +23,7 @@ function App() {
     currentConversation,
     sendMessage,
     loadConversations,
+    isLoading,
   } = useChatStore();
   const [input, setInput] = useState('');
 
@@ -39,9 +50,10 @@ function App() {
   }
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-    await sendMessage(input);
+    if (!input.trim() || isLoading) return;
+    const message = input.trim();
     setInput('');
+    await sendMessage(message);
   };
 
   return (
@@ -83,6 +95,17 @@ function App() {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-white text-gray-800 max-w-[70%] rounded-lg px-4 py-2">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 输入区域 */}
@@ -92,13 +115,15 @@ function App() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               placeholder="输入消息..."
-              className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isLoading}
+              className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}
-              className="bg-blue-500 text-white rounded-lg px-6 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+              disabled={isLoading || !input.trim()}
+              className="bg-blue-500 text-white rounded-lg px-6 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center disabled:bg-blue-300 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>

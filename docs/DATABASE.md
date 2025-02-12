@@ -43,6 +43,16 @@ CREATE POLICY "Users can insert own conversations"
   WITH CHECK (auth.uid() = user_id);
 ```
 
+3. 更新策略
+```sql
+CREATE POLICY "Users can update own conversations"
+  ON conversations
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
+
 ### messages 表策略
 
 1. 查看策略
@@ -74,3 +84,24 @@ CREATE POLICY "Users can insert messages in own conversations"
     )
   );
 ```
+
+## 权限说明
+
+1. conversations 表
+- 用户只能查看自己创建的对话
+- 用户只能创建属于自己的对话
+- 用户只能更新自己的对话
+- 所有操作都需要用户认证
+
+2. messages 表
+- 用户只能查看自己对话中的消息
+- 用户只能在自己的对话中发送消息
+- 所有操作都需要用户认证
+
+## 安全特性
+
+- 所有表都启用了行级安全(RLS)
+- 所有操作都需要用户认证
+- 使用 uuid 作为主键增加安全性
+- 使用外键约束确保数据完整性
+- 所有时间戳自动记录，不可手动修改
