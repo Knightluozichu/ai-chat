@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { langchainClient } from '../lib/langchain';
 import toast from 'react-hot-toast';
 
 export interface Message {
@@ -19,6 +20,8 @@ interface ChatState {
   conversations: Conversation[];
   currentConversation: Conversation | null;
   messages: Message[];
+  isAiResponding: boolean;
+  messageError: string | null;
   loadConversations: () => Promise<void>;
   createConversation: (title: string) => Promise<void>;
   setCurrentConversation: (conversation: Conversation) => Promise<void>;
@@ -30,6 +33,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   currentConversation: null,
   messages: [],
+  isAiResponding: false,
+  messageError: null,
   
   loadConversations: async () => {
     const { data, error } = await supabase
@@ -87,48 +92,100 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const conversation = get().currentConversation;
     if (!conversation) return;
     
-    const { data: userMessage, error: userError } = await supabase
-      .from('messages')
-      .insert([{
-        conversation_id: conversation.id,
-        content,
-        is_user: true,
-      }])
-      .select()
-      .single();
+    try {
+      // 获取用户信息
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('请先登录');
+
+      // 保存用户消息到 Supabase
+      const { data: userMessage, error: userError2 } = await supabase
+        .from('messages')
+        .insert([{
+          conversation_id: conversation.id,
+          content,
+          is_user: true,
+        }])
+        .select()
+        .single();
+        
+      if (userError2) throw userError2;
       
-    if (userError) throw userError;
-    
-    set((state) => ({
-      messages: [...state.messages, userMessage],
-    }));
-    
-    const { data: aiMessage, error: aiError } = await supabase
-      .from('messages')
-      .insert([{
-        conversation_id: conversation.id,
-        content: '这是一个模拟的AI回复。在实际开发中，这里将连接到后端API。',
-        is_user: false,
-      }])
-      .select()
-      .single();
+      set(state => ({
+        messages: [...state.messages, userMessage],
+        isAiResponding: true,
+        messageError: null,
+      }));
+
+      try {
+        // 调用 LangChain 服务
+        const aiResponse = await langchainClient.sendMessage({
+          message: content,
+          conversation_id: conversation.id,
+          user_id: user.id,
+        });
+
+        // 保存 AI 回复到 Supabase
+        const { data: aiMessage, error: aiError } = await supabase
+          .from('messages')
+          .insert([{
+            conversation_id: conversation.id,
+            content: aiResponse.content,
+            is_user: false,
+          }])
+          .select()
+          .single();
+          
+        if (aiError) throw aiError;
+        
+        set(state => ({
+          messages: [...state.messages, aiMessage],
+          isAiResponding: false,
+          messageError: null,
+        }));
+      } catch (error: any) {
+        // 将 AI 服务的错误消息作为 AI 的回复显示给用户
+        const errorMessage = error.message || '与 AI 服务通信失败，请稍后重试';
+        
+        const { data: errorAiMessage, error: saveError } = await supabase
+          .from('messages')
+          .insert([{
+            conversation_id: conversation.id,
+            content: errorMessage,
+            is_user: false,
+          }])
+          .select()
+          .single();
+
+        if (!saveError && errorAiMessage) {
+          set(state => ({
+            messages: [...state.messages, errorAiMessage],
+            isAiResponding: false,
+            messageError: null,
+          }));
+        } else {
+          set(state => ({
+            isAiResponding: false,
+            messageError: errorMessage,
+          }));
+        }
+      }
       
-    if (aiError) throw aiError;
-    
-    set((state) => ({
-      messages: [...state.messages, aiMessage],
-    }));
+    } catch (error: any) {
+      set({ 
+        isAiResponding: false,
+        messageError: error.message 
+      });
+      toast.error(error.message || '发送消息失败');
+    }
   },
 
   updateConversationTitle: async (id: string, title: string) => {
     try {
-      // 验证用户是否登录
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         throw new Error('请先登录');
       }
 
-      // 先检查对话是否存在且属于当前用户
       const { data: conversation, error: checkError } = await supabase
         .from('conversations')
         .select('id')
@@ -140,7 +197,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         throw new Error('对话不存在或无权访问');
       }
 
-      // 更新数据库
       const { error: updateError } = await supabase
         .from('conversations')
         .update({ title })
@@ -150,7 +206,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         throw updateError;
       }
 
-      // 更新本地状态
       set((state) => ({
         conversations: state.conversations.map(conv =>
           conv.id === id ? { ...conv, title } : conv

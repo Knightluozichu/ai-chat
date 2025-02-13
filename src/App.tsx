@@ -6,6 +6,51 @@ import { useChatStore } from './store/chatStore';
 import { Auth } from './components/Auth';
 import { ChatSidebar } from './components/ChatSidebar';
 
+function ChatMessages() {
+  const { messages, isAiResponding, messageError } = useChatStore();
+  
+  return (
+    <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+        >
+          <div
+            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+              message.isUser
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-800'
+            }`}
+          >
+            {message.content}
+          </div>
+        </div>
+      ))}
+      
+      {isAiResponding && (
+        <div className="flex justify-start">
+          <div className="bg-white text-gray-800 max-w-[70%] rounded-lg px-4 py-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" />
+              <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce delay-100" />
+              <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce delay-200" />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {messageError && (
+        <div className="flex justify-center">
+          <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg">
+            {messageError}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const { user, loading, checkAuth, signOut } = useAuthStore();
   const {
@@ -65,25 +110,7 @@ function App() {
           </button>
         </header>
 
-        {/* 消息列表 */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                  message.isUser
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-800'
-                }`}
-              >
-                {message.content}
-              </div>
-            </div>
-          ))}
-        </div>
+        <ChatMessages />
 
         {/* 输入区域 */}
         <div className="bg-white border-t p-4">
@@ -98,7 +125,8 @@ function App() {
             />
             <button
               onClick={handleSend}
-              className="bg-blue-500 text-white rounded-lg px-6 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+              disabled={!input.trim() || useChatStore.getState().isAiResponding}
+              className="bg-blue-500 text-white rounded-lg px-6 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -109,4 +137,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
