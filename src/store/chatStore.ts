@@ -1,8 +1,20 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 import { langchainClient } from '../lib/langchain';
 import toast from 'react-hot-toast';
-import { persist } from 'zustand/middleware';
+
+const MESSAGES_PER_PAGE = 20;
+const TIMEOUT = 5000;
+
+const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error('请求超时')), ms)
+    )
+  ]);
+};
 
 export interface Message {
   id: string;
@@ -27,12 +39,15 @@ interface ChatState {
   messages: Message[];
   isAiResponding: boolean;
   messageError: string | null;
+  currentPage: number;
+  hasMore: boolean;
   loadConversations: () => Promise<void>;
   createConversation: (title: string) => Promise<void>;
   setCurrentConversation: (conversation: Conversation) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
+  loadMoreMessages: () => Promise<void>;
 }
 
 const normalizeMessage = (message: any): Message => ({
@@ -48,22 +63,6 @@ const normalizeConversation = (conversation: any): Conversation => ({
   createdAt: conversation.created_at,
 });
 
-const debounce = <T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
-  let timeout: NodeJS.Timeout;
-  
-  return (...args: Parameters<T>): Promise<ReturnType<T>> => {
-    return new Promise((resolve) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        resolve(func(...args));
-      }, wait);
-    });
-  };
-};
-
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -72,15 +71,54 @@ export const useChatStore = create<ChatState>()(
       messages: [],
       isAiResponding: false,
       messageError: null,
+      currentPage: 1,
+      hasMore: true,
       
       loadConversations: async () => {
-        const { data, error } = await supabase
-          .from('conversations')
-          .select('*')
-          .order('created_at', { ascending: false });
+        try {
+          const { data, error } = await withTimeout(
+            supabase
+              .from('conversations')
+              .select('*')
+              .order('created_at', { ascending: false }),
+            TIMEOUT
+          );
+            
+          if (error) throw error;
+          set({ conversations: data.map(normalizeConversation) });
+        } catch (error: any) {
+          console.error('加载对话失败:', error);
+          toast.error('加载对话失败，请刷新重试');
+        }
+      },
+      
+      loadMoreMessages: async () => {
+        const { currentConversation, currentPage, messages } = get();
+        if (!currentConversation) return;
+
+        try {
+          const { data, error } = await withTimeout(
+            supabase
+              .from('messages')
+              .select('*')
+              .eq('conversation_id', currentConversation.id)
+              .order('created_at', { ascending: true })
+              .range(currentPage * MESSAGES_PER_PAGE, (currentPage + 1) * MESSAGES_PER_PAGE - 1),
+            TIMEOUT
+          );
+            
+          if (error) throw error;
           
-        if (error) throw error;
-        set({ conversations: data.map(normalizeConversation) });
+          const newMessages = data.map(normalizeMessage);
+          set({ 
+            messages: [...messages, ...newMessages],
+            currentPage: currentPage + 1,
+            hasMore: data.length === MESSAGES_PER_PAGE
+          });
+        } catch (error: any) {
+          console.error('加载更多消息失败:', error);
+          toast.error('加载更多消息失败，请重试');
+        }
       },
       
       createConversation: async (title) => {
@@ -88,45 +126,66 @@ export const useChatStore = create<ChatState>()(
         if (userError) throw userError;
         if (!user) throw new Error('请先登录');
 
-        const { data, error } = await supabase
-          .from('conversations')
-          .insert([{ 
-            title,
-            user_id: user.id
-          }])
-          .select()
-          .single();
-          
-        if (error) {
-          if (error.code === '42501') {
-            throw new Error('创建会话失败：权限不足');
+        try {
+          const { data, error } = await withTimeout(
+            supabase
+              .from('conversations')
+              .insert([{ 
+                title,
+                user_id: user.id
+              }])
+              .select()
+              .single(),
+            TIMEOUT
+          );
+            
+          if (error) {
+            if (error.code === '42501') {
+              throw new Error('创建会话失败：权限不足');
+            }
+            throw error;
           }
+
+          const normalizedConversation = normalizeConversation(data);
+          set((state) => ({
+            conversations: [normalizedConversation, ...state.conversations],
+            currentConversation: normalizedConversation,
+            messages: [],
+            currentPage: 1,
+            hasMore: true
+          }));
+        } catch (error: any) {
+          console.error('创建对话失败:', error);
           throw error;
         }
-
-        const normalizedConversation = normalizeConversation(data);
-        set((state) => ({
-          conversations: [normalizedConversation, ...state.conversations],
-          currentConversation: normalizedConversation,
-          messages: []
-        }));
       },
       
       setCurrentConversation: async (conversation) => {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversation.id)
-          .order('created_at', { ascending: true });
-          
-        if (error) throw error;
-        set({
-          currentConversation: conversation,
-          messages: data.map(normalizeMessage),
-        });
+        try {
+          const { data, error } = await withTimeout(
+            supabase
+              .from('messages')
+              .select('*')
+              .eq('conversation_id', conversation.id)
+              .order('created_at', { ascending: true })
+              .limit(MESSAGES_PER_PAGE),
+            TIMEOUT
+          );
+            
+          if (error) throw error;
+          set({
+            currentConversation: conversation,
+            messages: data.map(normalizeMessage),
+            currentPage: 1,
+            hasMore: data.length === MESSAGES_PER_PAGE
+          });
+        } catch (error: any) {
+          console.error('加载消息失败:', error);
+          toast.error('加载消息失败，请重试');
+        }
       },
       
-      sendMessage: debounce(async (content) => {
+      sendMessage: async (content) => {
         const conversation = get().currentConversation;
         if (!conversation) return;
         
@@ -134,15 +193,18 @@ export const useChatStore = create<ChatState>()(
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           if (userError || !user) throw new Error('请先登录');
 
-          const { data: userMessage, error: userError2 } = await supabase
-            .from('messages')
-            .insert([{
-              conversation_id: conversation.id,
-              content,
-              is_user: true,
-            }])
-            .select()
-            .single();
+          const { data: userMessage, error: userError2 } = await withTimeout(
+            supabase
+              .from('messages')
+              .insert([{
+                conversation_id: conversation.id,
+                content,
+                is_user: true,
+              }])
+              .select()
+              .single(),
+            TIMEOUT
+          );
             
           if (userError2) throw userError2;
           
@@ -153,21 +215,27 @@ export const useChatStore = create<ChatState>()(
           }));
 
           try {
-            const aiResponse = await langchainClient.sendMessage({
-              message: content,
-              conversation_id: conversation.id,
-              user_id: user.id,
-            });
-
-            const { data: aiMessage, error: aiError } = await supabase
-              .from('messages')
-              .insert([{
+            const aiResponse = await withTimeout(
+              langchainClient.sendMessage({
+                message: content,
                 conversation_id: conversation.id,
-                content: aiResponse.content,
-                is_user: false,
-              }])
-              .select()
-              .single();
+                user_id: user.id,
+              }),
+              30000 // AI响应给30秒超时
+            );
+
+            const { data: aiMessage, error: aiError } = await withTimeout(
+              supabase
+                .from('messages')
+                .insert([{
+                  conversation_id: conversation.id,
+                  content: aiResponse.content,
+                  is_user: false,
+                }])
+                .select()
+                .single(),
+              TIMEOUT
+            );
               
             if (aiError) throw aiError;
             
@@ -179,15 +247,18 @@ export const useChatStore = create<ChatState>()(
           } catch (error: any) {
             const errorMessage = error.message || '与 AI 服务通信失败，请稍后重试';
             
-            const { data: errorAiMessage, error: saveError } = await supabase
-              .from('messages')
-              .insert([{
-                conversation_id: conversation.id,
-                content: errorMessage,
-                is_user: false,
-              }])
-              .select()
-              .single();
+            const { data: errorAiMessage, error: saveError } = await withTimeout(
+              supabase
+                .from('messages')
+                .insert([{
+                  conversation_id: conversation.id,
+                  content: errorMessage,
+                  is_user: false,
+                }])
+                .select()
+                .single(),
+              TIMEOUT
+            );
 
             if (!saveError && errorAiMessage) {
               set(state => ({
@@ -210,7 +281,7 @@ export const useChatStore = create<ChatState>()(
           });
           toast.error(error.message || '发送消息失败');
         }
-      }, 300),
+      },
 
       updateConversationTitle: async (id: string, title: string) => {
         try {
@@ -219,21 +290,27 @@ export const useChatStore = create<ChatState>()(
             throw new Error('请先登录');
           }
 
-          const { data: conversation, error: checkError } = await supabase
-            .from('conversations')
-            .select('id')
-            .eq('id', id)
-            .eq('user_id', user.id)
-            .single();
+          const { data: conversation, error: checkError } = await withTimeout(
+            supabase
+              .from('conversations')
+              .select('id')
+              .eq('id', id)
+              .eq('user_id', user.id)
+              .single(),
+            TIMEOUT
+          );
 
           if (checkError || !conversation) {
             throw new Error('对话不存在或无权访问');
           }
 
-          const { error: updateError } = await supabase
-            .from('conversations')
-            .update({ title })
-            .eq('id', id);
+          const { error: updateError } = await withTimeout(
+            supabase
+              .from('conversations')
+              .update({ title })
+              .eq('id', id),
+            TIMEOUT
+          );
 
           if (updateError) {
             throw updateError;
@@ -261,11 +338,14 @@ export const useChatStore = create<ChatState>()(
             throw new Error('请先登录');
           }
 
-          const { error } = await supabase
-            .from('conversations')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', user.id);
+          const { error } = await withTimeout(
+            supabase
+              .from('conversations')
+              .delete()
+              .eq('id', id)
+              .eq('user_id', user.id),
+            TIMEOUT
+          );
 
           if (error) {
             throw error;

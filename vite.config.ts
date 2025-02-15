@@ -12,7 +12,18 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'supabase': ['@supabase/supabase-js'],
+          'chat': ['./src/components/ChatMessages.tsx'],
+          'auth': ['./src/components/Auth.tsx'],
+          'sidebar': ['./src/components/ChatSidebar.tsx']
         }
+      }
+    },
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
       }
     }
   },
