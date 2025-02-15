@@ -1,14 +1,31 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  // 添加环境变量类型定义
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'supabase': ['@supabase/supabase-js'],
+        }
+      }
+    }
+  },
+  server: {
+    warmup: {
+      clientFiles: [
+        './src/App.tsx',
+        './src/components/Auth.tsx',
+        './src/components/ChatSidebar.tsx'
+      ]
+    }
+  },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-  },
+  }
 });
