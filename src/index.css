@@ -13,8 +13,21 @@
   }
 }
 
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
 }
 
 /* 自定义滚动条样式 */

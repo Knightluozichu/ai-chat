@@ -11,9 +11,16 @@ interface ChatRequest {
   user_id: string;
 }
 
+interface DocumentProcessRequest {
+  file_id: string;
+  url: string;
+  user_id: string;  // 添加 user_id 参数
+}
+
 const LANGCHAIN_API = {
   chat: '/api/chat',
   history: '/api/chat/history',
+  processDocument: '/api/documents/process'
 };
 
 class LangChainClient {
@@ -48,6 +55,26 @@ class LangChainClient {
     } catch (error) {
       clearTimeout(timeoutId);
       throw error;
+    }
+  }
+
+  async processDocument(request: DocumentProcessRequest): Promise<void> {
+    try {
+      const response = await this.fetchWithTimeout(
+        `${this.baseUrl}${LANGCHAIN_API.processDocument}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(request),
+        }
+      );
+      
+      await response.json();
+    } catch (error) {
+      console.error('处理文档失败:', error);
+      throw new Error('文档处理服务暂时不可用，请稍后重试');
     }
   }
 

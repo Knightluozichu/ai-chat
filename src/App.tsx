@@ -5,6 +5,7 @@ import { useAuthStore } from './store/authStore';
 import { useChatStore } from './store/chatStore';
 import { Auth } from './components/Auth';
 import { ResizableSidebar } from './components/ResizableSidebar';
+import { KnowledgeCapsule } from './components/KnowledgeBase/KnowledgeCapsule';
 
 // 性能监控
 if (process.env.NODE_ENV === 'development' && window.performance) {
@@ -203,6 +204,8 @@ function App() {
           disabled={isAiResponding}
         />
       </div>
+
+      <KnowledgeCapsule />
     </div>
   );
 }

@@ -58,6 +58,9 @@ export const useAuthStore = create<AuthState>()(
             supabase.auth.signUp({
               email,
               password,
+              options: {
+                emailRedirectTo: window.location.origin // 添加重定向URL
+              }
             }),
             TIMEOUT
           );
@@ -80,6 +83,8 @@ export const useAuthStore = create<AuthState>()(
           );
           if (error) throw error;
           set({ user: null });
+          // 清除本地存储中的会话数据
+          localStorage.removeItem('sb-fmqreoeqzqdaqdtgqzkc-auth-token');
         } catch (error: any) {
           if (error.message === '请求超时') {
             throw new Error('退出超时，请重试');
@@ -89,29 +94,33 @@ export const useAuthStore = create<AuthState>()(
       },
       checkAuth: async () => {
         try {
-          const { data: { user }, error } = await withTimeout(
-            supabase.auth.getUser(),
-            TIMEOUT
-          );
-          if (error) {
+          // 先检查本地会话
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            // 如果有会话，刷新它
+            const { data: { user }, error } = await supabase.auth.refreshSession();
+            if (error) {
+              set({ user: null, loading: false });
+              return;
+            }
+            set({ 
+              user: user ? { id: user.id, email: user.email! } : null,
+              loading: false 
+            });
+          } else {
             set({ user: null, loading: false });
-            return;
           }
-          set({ 
-            user: user ? { id: user.id, email: user.email! } : null, 
-            loading: false 
-          });
         } catch (error: any) {
+          console.error('认证检查失败:', error);
           set({ user: null, loading: false });
-          if (error.message === '请求超时') {
-            console.error('认证检查超时');
-          }
         }
       },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ user: state.user }),
+      storage: localStorage // 显式指定使用 localStorage
     }
   )
 );
