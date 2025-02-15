@@ -9,12 +9,16 @@ export interface Message {
   content: string;
   isUser: boolean;
   createdAt: string;
+  conversation_id?: string;
+  is_user?: boolean;
+  created_at?: string;
 }
 
 export interface Conversation {
   id: string;
   title: string;
   createdAt: string;
+  created_at?: string;
 }
 
 interface ChatState {
@@ -28,9 +32,22 @@ interface ChatState {
   setCurrentConversation: (conversation: Conversation) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
+  deleteConversation: (id: string) => Promise<void>;
 }
 
-// 添加防抖函数
+const normalizeMessage = (message: any): Message => ({
+  id: message.id,
+  content: message.content,
+  isUser: message.is_user,
+  createdAt: message.created_at,
+});
+
+const normalizeConversation = (conversation: any): Conversation => ({
+  id: conversation.id,
+  title: conversation.title,
+  createdAt: conversation.created_at,
+});
+
 const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -63,7 +80,7 @@ export const useChatStore = create<ChatState>()(
           .order('created_at', { ascending: false });
           
         if (error) throw error;
-        set({ conversations: data });
+        set({ conversations: data.map(normalizeConversation) });
       },
       
       createConversation: async (title) => {
@@ -87,9 +104,10 @@ export const useChatStore = create<ChatState>()(
           throw error;
         }
 
+        const normalizedConversation = normalizeConversation(data);
         set((state) => ({
-          conversations: [data, ...state.conversations],
-          currentConversation: data,
+          conversations: [normalizedConversation, ...state.conversations],
+          currentConversation: normalizedConversation,
           messages: []
         }));
       },
@@ -104,7 +122,7 @@ export const useChatStore = create<ChatState>()(
         if (error) throw error;
         set({
           currentConversation: conversation,
-          messages: data,
+          messages: data.map(normalizeMessage),
         });
       },
       
@@ -129,7 +147,7 @@ export const useChatStore = create<ChatState>()(
           if (userError2) throw userError2;
           
           set(state => ({
-            messages: [...state.messages, userMessage],
+            messages: [...state.messages, normalizeMessage(userMessage)],
             isAiResponding: true,
             messageError: null,
           }));
@@ -154,7 +172,7 @@ export const useChatStore = create<ChatState>()(
             if (aiError) throw aiError;
             
             set(state => ({
-              messages: [...state.messages, aiMessage],
+              messages: [...state.messages, normalizeMessage(aiMessage)],
               isAiResponding: false,
               messageError: null,
             }));
@@ -173,7 +191,7 @@ export const useChatStore = create<ChatState>()(
 
             if (!saveError && errorAiMessage) {
               set(state => ({
-                messages: [...state.messages, errorAiMessage],
+                messages: [...state.messages, normalizeMessage(errorAiMessage)],
                 isAiResponding: false,
                 messageError: null,
               }));
@@ -232,6 +250,34 @@ export const useChatStore = create<ChatState>()(
           
         } catch (error: any) {
           console.error('更新会话标题失败:', error);
+          throw error;
+        }
+      },
+
+      deleteConversation: async (id: string) => {
+        try {
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            throw new Error('请先登录');
+          }
+
+          const { error } = await supabase
+            .from('conversations')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', user.id);
+
+          if (error) {
+            throw error;
+          }
+
+          set((state) => ({
+            conversations: state.conversations.filter(conv => conv.id !== id),
+            currentConversation: state.currentConversation?.id === id ? null : state.currentConversation,
+            messages: state.currentConversation?.id === id ? [] : state.messages
+          }));
+        } catch (error: any) {
+          console.error('删除对话失败:', error);
           throw error;
         }
       },
