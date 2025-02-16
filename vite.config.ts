@@ -3,9 +3,6 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
   build: {
     rollupOptions: {
       output: {
@@ -14,7 +11,8 @@ export default defineConfig({
           'supabase': ['@supabase/supabase-js'],
           'chat': ['./src/components/ChatMessages.tsx'],
           'auth': ['./src/components/Auth.tsx'],
-          'sidebar': ['./src/components/ChatSidebar.tsx']
+          'sidebar': ['./src/components/ChatSidebar.tsx'],
+          'icons': ['./src/components/icons.ts']
         }
       }
     },
@@ -38,5 +36,8 @@ export default defineConfig({
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+  },
+  optimizeDeps: {
+    exclude: ['lucide-react']
   }
 });

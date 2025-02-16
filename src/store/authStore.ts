@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import { useChatStore } from './chatStore';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -16,15 +18,27 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
-const TIMEOUT = 5000; // 5秒超时
+const TIMEOUT = 10000; // 10秒超时
 
-const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+const withTimeout = <T>(promise: Promise<T>, ms: number, operation: string): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${operation}超时，请重试`));
+    }, ms);
+  });
+
   return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => 
-      setTimeout(() => reject(new Error('请求超时')), ms)
-    )
-  ]);
+    promise.then((result) => {
+      clearTimeout(timeoutId);
+      return result;
+    }),
+    timeoutPromise
+  ]).catch((error) => {
+    clearTimeout(timeoutId);
+    throw error;
+  });
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -32,95 +46,150 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       loading: true,
+      
       signIn: async (email, password) => {
         try {
+          // 1. 清理旧的状态
+          useChatStore.getState().clearState();
+          
+          // 2. 执行登录
           const { data, error } = await withTimeout(
             supabase.auth.signInWithPassword({
               email,
               password,
             }),
-            TIMEOUT
+            TIMEOUT,
+            '登录'
           );
+          
           if (error) throw error;
-          if (data.user) {
-            set({ user: { id: data.user.id, email: data.user.email! } });
-          }
+          if (!data.user) throw new Error('登录失败：未获取到用户信息');
+          
+          // 3. 更新用户状态
+          set({ user: { id: data.user.id, email: data.user.email! } });
+          toast.success('登录成功');
         } catch (error: any) {
-          if (error.message === '请求超时') {
-            throw new Error('登录超时，请重试');
+          console.error('登录失败:', error);
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('邮箱或密码错误');
           }
-          throw error;
+          throw new Error(error.message || '登录失败，请重试');
         }
       },
+      
       signUp: async (email, password) => {
         try {
+          // 1. 清理旧的状态
+          useChatStore.getState().clearState();
+          
+          // 2. 执行注册
           const { data, error } = await withTimeout(
             supabase.auth.signUp({
               email,
               password,
               options: {
-                emailRedirectTo: window.location.origin // 添加重定向URL
+                emailRedirectTo: window.location.origin,
+                data: {
+                  email_confirmed: true
+                }
               }
             }),
-            TIMEOUT
+            TIMEOUT,
+            '注册'
           );
+          
           if (error) throw error;
-          if (data.user) {
-            set({ user: { id: data.user.id, email: data.user.email! } });
-          }
+          if (!data.user) throw new Error('注册失败：未获取到用户信息');
+          
+          // 3. 更新用户状态
+          set({ user: { id: data.user.id, email: data.user.email! } });
+          toast.success('注册成功');
         } catch (error: any) {
-          if (error.message === '请求超时') {
-            throw new Error('注册超时，请重试');
+          console.error('注册失败:', error);
+          if (error.message.includes('User already registered')) {
+            throw new Error('该邮箱已被注册');
           }
-          throw error;
+          throw new Error(error.message || '注册失败，请重试');
         }
       },
+      
       signOut: async () => {
         try {
-          const { error } = await withTimeout(
-            supabase.auth.signOut(),
-            TIMEOUT
-          );
-          if (error) throw error;
-          set({ user: null });
-          // 清除本地存储中的会话数据
+          // 1. 清理聊天状态
+          useChatStore.getState().clearState();
+          
+          // 2. 清理本地存储和认证状态
           localStorage.removeItem('sb-fmqreoeqzqdaqdtgqzkc-auth-token');
-        } catch (error: any) {
-          if (error.message === '请求超时') {
-            throw new Error('退出超时，请重试');
+          set({ user: null });
+          
+          // 3. 执行 Supabase 登出
+          const { error } = await supabase.auth.signOut();
+          
+          // 4. 如果登出失败，只记录错误
+          if (error) {
+            console.warn('Supabase 登出异常:', error);
           }
-          throw error;
+          
+          toast.success('已退出登录');
+        } catch (error: any) {
+          // 5. 即使发生错误，也确保用户处于登出状态
+          console.error('退出失败:', error);
+          set({ user: null });
+          localStorage.removeItem('sb-fmqreoeqzqdaqdtgqzkc-auth-token');
         }
       },
+      
       checkAuth: async () => {
         try {
-          // 先检查本地会话
-          const { data: { session } } = await supabase.auth.getSession();
+          set({ loading: true });
+          
+          // 1. 检查会话
+          const { data: { session } } = await withTimeout(
+            supabase.auth.getSession(),
+            TIMEOUT,
+            '检查认证状态'
+          );
           
           if (session) {
-            // 如果有会话，刷新它
-            const { data: { user }, error } = await supabase.auth.refreshSession();
+            // 2. 刷新会话
+            const { data: { user }, error } = await withTimeout(
+              supabase.auth.refreshSession(),
+              TIMEOUT,
+              '刷新会话'
+            );
+            
             if (error) {
+              console.error('刷新会话失败:', error);
               set({ user: null, loading: false });
               return;
             }
-            set({ 
-              user: user ? { id: user.id, email: user.email! } : null,
-              loading: false 
-            });
-          } else {
-            set({ user: null, loading: false });
+            
+            if (user) {
+              set({ 
+                user: { id: user.id, email: user.email! },
+                loading: false 
+              });
+              return;
+            }
           }
+          
+          // 3. 无有效会话
+          set({ user: null, loading: false });
+          
         } catch (error: any) {
           console.error('认证检查失败:', error);
           set({ user: null, loading: false });
+          
+          if (process.env.NODE_ENV === 'development') {
+            toast.error(`认证检查失败: ${error.message}`);
+          }
         }
       },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ user: state.user }),
-      storage: localStorage // 显式指定使用 localStorage
+      storage: localStorage
     }
   )
 );

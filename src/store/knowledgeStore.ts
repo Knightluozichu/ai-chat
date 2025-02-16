@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { langchainClient } from '../lib/langchain';
 import toast from 'react-hot-toast';
+import { throttledProgress, smoothProgress, addProgressHistory, handleProgressError } from '../utils/progress';
 
 export interface File {
   id: string;
@@ -18,8 +19,9 @@ export interface File {
 interface KnowledgeState {
   files: File[];
   loading: boolean;
+  isFileLoading: boolean;
   searchQuery: string;
-  uploadFile: (file: File) => Promise<void>;
+  uploadFile: (file: Blob) => Promise<void>;
   deleteFile: (id: string) => Promise<void>;
   loadFiles: () => Promise<void>;
   setSearchQuery: (query: string) => void;
@@ -37,42 +39,54 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
   files: [],
   loading: false,
+  isFileLoading: false,
   searchQuery: '',
 
-  uploadFile: async (file: File) => {
+  uploadFile: async (file: Blob) => {
+    console.log('📤 开始上传文件:', (file as any).name);
+    set({ isFileLoading: true });
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('请先登录');
 
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      if (!ALLOWED_TYPES.includes((file as any).type)) {
         throw new Error('仅支持 PDF 和 Word 文档');
       }
 
-      if (file.size > MAX_FILE_SIZE) {
+      if ((file as any).size > MAX_FILE_SIZE) {
         throw new Error('文件大小不能超过 10MB');
       }
 
-      const fileExt = file.name.split('.').pop();
+      const fileExt = (file as any).name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      // 上传文件到存储
+      console.log('🚀 开始上传到 Supabase 存储');
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('files')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ 上传失败:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('✅ 文件上传成功');
 
       const { data: { publicUrl } } = supabase.storage
         .from('files')
         .getPublicUrl(filePath);
 
-      const { data, error } = await supabase
+      // 创建文件记录
+      const { data: fileRecord, error } = await supabase
         .from('files')
         .insert([{
           user_id: user.id,
-          name: file.name,
-          size: file.size,
-          type: file.type,
+          name: (file as any).name,
+          size: (file as any).size,
+          type: (file as any).type,
           url: publicUrl,
           processing_status: 'pending'
         }])
@@ -81,35 +95,33 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
 
       if (error) throw error;
 
-      set(state => ({
-        files: [data, ...state.files]
-      }));
-
-      // 触发文档处理（使用 langchainClient）
+      // 开始处理文档
+      console.log('🔄 开始处理文档');
       try {
         await langchainClient.processDocument({
-          file_id: data.id,
+          file_id: fileRecord.id,
           url: publicUrl,
-          user_id: user.id  // 添加 user_id 参数
+          user_id: user.id
         });
-        console.log('文档处理请求成功');
       } catch (error: any) {
-        console.error('文档处理请求失败:', error);
-        
-        // 更新文件状态为错误
+        console.error('❌ 文档处理失败:', error);
         await supabase
           .from('files')
           .update({
             processing_status: 'error',
             error_message: error.message || '文档处理服务暂时不可用，请稍后重试'
           })
-          .eq('id', data.id);
+          .eq('id', fileRecord.id);
+          
+        throw error;
       }
 
-      toast.success('文件上传成功');
     } catch (error: any) {
+      console.error('❌ 文件上传过程失败:', error);
       toast.error(error.message || '文件上传失败');
       throw error;
+    } finally {
+      set({ isFileLoading: false });
     }
   },
 
@@ -124,7 +136,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
 
       if (fetchError) throw fetchError;
 
-      // 从 Storage 中删除文件
+      // 从存储中删除文件
       const filePath = new URL(file.url).pathname.split('/').pop();
       if (filePath) {
         const { error: storageError } = await supabase.storage
@@ -133,11 +145,10 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
 
         if (storageError) {
           console.error('删除存储文件失败:', storageError);
-          // 继续删除数据库记录
         }
       }
 
-      // 删除数据库记录（会级联删除 document_chunks）
+      // 删除数据库记录
       const { error: deleteError } = await supabase
         .from('files')
         .delete()
@@ -157,6 +168,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
   },
 
   loadFiles: async () => {
+    console.log('📚 开始加载文件列表');
     try {
       set({ loading: true });
 
@@ -165,10 +177,15 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ 加载文件失败:', error);
+        throw error;
+      }
 
-      set({ files: data || [], loading: false });
+      console.log('✅ 文件加载成功:', data.length + '个文件');
+      set({ files: data, loading: false });
     } catch (error: any) {
+      console.error('❌ 加载文件失败:', error);
       set({ loading: false });
       toast.error(error.message || '加载文件失败');
     }
@@ -179,7 +196,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
   },
 
   subscribeToFileUpdates: () => {
-    // 订阅文件状态更新
+    console.log('🔌 初始化文件更新订阅');
     const subscription = supabase
       .channel('files-updates')
       .on(
@@ -190,32 +207,46 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
           table: 'files'
         },
         (payload) => {
+          console.log('📡 收到文件更新:', payload);
           const { eventType, new: newRecord, old: oldRecord } = payload;
           
           switch (eventType) {
             case 'INSERT':
+              console.log('➕ 新文件添加:', newRecord);
               set(state => ({
-                files: [newRecord, ...state.files]
+                ...state,
+                files: [newRecord as File, ...state.files]
               }));
               break;
             
             case 'UPDATE':
+              console.log('🔄 文件状态更新:', {
+                id: newRecord.id,
+                oldStatus: oldRecord.processing_status,
+                newStatus: newRecord.processing_status
+              });
+              
               set(state => ({
+                ...state,
                 files: state.files.map(file =>
-                  file.id === newRecord.id ? { ...file, ...newRecord } : file
+                  file.id === newRecord.id ? { ...file, ...newRecord as File } : file
                 )
               }));
 
-              // 处理完成或失败时显示通知
-              if (newRecord.processing_status === 'completed') {
-                toast.success('文档处理完成');
-              } else if (newRecord.processing_status === 'error') {
-                toast.error('文档处理失败: ' + (newRecord.error_message || '未知错误'));
+              // 状态变更通知
+              if (oldRecord.processing_status !== newRecord.processing_status) {
+                if (newRecord.processing_status === 'completed') {
+                  toast.success('文档处理完成');
+                } else if (newRecord.processing_status === 'error') {
+                  toast.error('文档处理失败: ' + (newRecord.error_message || '未知错误'));
+                }
               }
               break;
             
             case 'DELETE':
+              console.log('❌ 文件删除:', oldRecord);
               set(state => ({
+                ...state,
                 files: state.files.filter(file => file.id !== oldRecord.id)
               }));
               break;
@@ -224,8 +255,8 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       )
       .subscribe();
 
-    // 返回取消订阅函数
     return () => {
+      console.log('🔌 清理文件更新订阅');
       subscription.unsubscribe();
     };
   }

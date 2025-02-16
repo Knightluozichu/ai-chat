@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore } from '../store/chatStore';
-import toast from 'react-hot-toast';
 
 export function Auth() {
   const [email, setEmail] = useState('');
@@ -16,11 +15,9 @@ export function Auth() {
       if (isLogin) {
         await signIn(email, password);
         await loadConversations();
-        toast.success('登录成功');
       } else {
         await signUp(email, password);
         await loadConversations();
-        toast.success('注册成功');
       }
     } catch (error: any) {
       if (error.message === 'User already registered') {

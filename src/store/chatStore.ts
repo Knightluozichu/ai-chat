@@ -5,32 +5,20 @@ import { langchainClient } from '../lib/langchain';
 import toast from 'react-hot-toast';
 
 const MESSAGES_PER_PAGE = 20;
-const TIMEOUT = 5000;
+const TIMEOUT = 15000;
+const AI_RESPONSE_TIMEOUT = 60000;
 
-const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => 
-      setTimeout(() => reject(new Error('请求超时')), ms)
-    )
-  ]);
-};
-
-export interface Message {
+interface Message {
   id: string;
   content: string;
   isUser: boolean;
   createdAt: string;
-  conversation_id?: string;
-  is_user?: boolean;
-  created_at?: string;
 }
 
-export interface Conversation {
+interface Conversation {
   id: string;
   title: string;
   createdAt: string;
-  created_at?: string;
 }
 
 interface ChatState {
@@ -48,6 +36,7 @@ interface ChatState {
   updateConversationTitle: (id: string, title: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
+  clearState: () => void;
 }
 
 const normalizeMessage = (message: any): Message => ({
@@ -63,6 +52,27 @@ const normalizeConversation = (conversation: any): Conversation => ({
   createdAt: conversation.created_at,
 });
 
+const withTimeout = <T>(promise: Promise<T>, ms: number, operation: string): Promise<T> => {
+  let timeoutId: NodeJS.Timeout;
+  
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${operation}超时，请重试`));
+    }, ms);
+  });
+
+  return Promise.race([
+    promise.then((result) => {
+      clearTimeout(timeoutId);
+      return result;
+    }),
+    timeoutPromise
+  ]).catch((error) => {
+    clearTimeout(timeoutId);
+    throw error;
+  });
+};
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -73,6 +83,18 @@ export const useChatStore = create<ChatState>()(
       messageError: null,
       currentPage: 1,
       hasMore: true,
+
+      clearState: () => {
+        set({
+          conversations: [],
+          currentConversation: null,
+          messages: [],
+          isAiResponding: false,
+          messageError: null,
+          currentPage: 1,
+          hasMore: true
+        });
+      },
       
       loadConversations: async () => {
         try {
@@ -81,17 +103,30 @@ export const useChatStore = create<ChatState>()(
               .from('conversations')
               .select('*')
               .order('created_at', { ascending: false }),
-            TIMEOUT
+            TIMEOUT,
+            '加载对话列表'
           );
             
           if (error) throw error;
-          set({ conversations: data.map(normalizeConversation) });
+          
+          const normalizedConversations = data.map(normalizeConversation);
+          set({ 
+            conversations: normalizedConversations,
+            // 清空当前会话和消息
+            currentConversation: null,
+            messages: []
+          });
+          
+          // 如果有对话，自动加载第一个
+          if (normalizedConversations.length > 0) {
+            await get().setCurrentConversation(normalizedConversations[0]);
+          }
         } catch (error: any) {
           console.error('加载对话失败:', error);
-          toast.error('加载对话失败，请刷新重试');
+          throw new Error(error.message || '加载对话失败，请重试');
         }
       },
-      
+
       loadMoreMessages: async () => {
         const { currentConversation, currentPage, messages } = get();
         if (!currentConversation) return;
@@ -104,7 +139,8 @@ export const useChatStore = create<ChatState>()(
               .eq('conversation_id', currentConversation.id)
               .order('created_at', { ascending: true })
               .range(currentPage * MESSAGES_PER_PAGE, (currentPage + 1) * MESSAGES_PER_PAGE - 1),
-            TIMEOUT
+            TIMEOUT,
+            '加载更多消息'
           );
             
           if (error) throw error;
@@ -117,7 +153,7 @@ export const useChatStore = create<ChatState>()(
           });
         } catch (error: any) {
           console.error('加载更多消息失败:', error);
-          toast.error('加载更多消息失败，请重试');
+          throw new Error(error.message || '加载更多消息失败，请重试');
         }
       },
       
@@ -136,7 +172,8 @@ export const useChatStore = create<ChatState>()(
               }])
               .select()
               .single(),
-            TIMEOUT
+            TIMEOUT,
+            '创建对话'
           );
             
           if (error) {
@@ -169,29 +206,40 @@ export const useChatStore = create<ChatState>()(
               .eq('conversation_id', conversation.id)
               .order('created_at', { ascending: true })
               .limit(MESSAGES_PER_PAGE),
-            TIMEOUT
+            TIMEOUT,
+            '加载对话消息'
           );
             
           if (error) throw error;
+          
           set({
             currentConversation: conversation,
             messages: data.map(normalizeMessage),
             currentPage: 1,
-            hasMore: data.length === MESSAGES_PER_PAGE
+            hasMore: data.length === MESSAGES_PER_PAGE,
+            messageError: null
           });
         } catch (error: any) {
           console.error('加载消息失败:', error);
-          toast.error('加载消息失败，请重试');
+          throw new Error(error.message || '加载消息失败，请重试');
         }
       },
       
       sendMessage: async (content) => {
         const conversation = get().currentConversation;
-        if (!conversation) return;
+        if (!conversation) {
+          toast.error('请先选择或创建一个对话');
+          return;
+        }
         
         try {
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           if (userError || !user) throw new Error('请先登录');
+
+          set(state => ({
+            isAiResponding: true,
+            messageError: null
+          }));
 
           const { data: userMessage, error: userError2 } = await withTimeout(
             supabase
@@ -203,15 +251,14 @@ export const useChatStore = create<ChatState>()(
               }])
               .select()
               .single(),
-            TIMEOUT
+            TIMEOUT,
+            '发送消息'
           );
             
           if (userError2) throw userError2;
           
           set(state => ({
-            messages: [...state.messages, normalizeMessage(userMessage)],
-            isAiResponding: true,
-            messageError: null,
+            messages: [...state.messages, normalizeMessage(userMessage)]
           }));
 
           try {
@@ -221,7 +268,8 @@ export const useChatStore = create<ChatState>()(
                 conversation_id: conversation.id,
                 user_id: user.id,
               }),
-              30000 // AI响应给30秒超时
+              AI_RESPONSE_TIMEOUT,
+              'AI响应'
             );
 
             const { data: aiMessage, error: aiError } = await withTimeout(
@@ -234,7 +282,8 @@ export const useChatStore = create<ChatState>()(
                 }])
                 .select()
                 .single(),
-              TIMEOUT
+              TIMEOUT,
+              '保存AI响应'
             );
               
             if (aiError) throw aiError;
@@ -245,7 +294,10 @@ export const useChatStore = create<ChatState>()(
               messageError: null,
             }));
           } catch (error: any) {
-            const errorMessage = error.message || '与 AI 服务通信失败，请稍后重试';
+            console.error('AI响应失败:', error);
+            const errorMessage = error.message === 'signal is aborted without reason' 
+              ? 'AI响应超时，请重试'
+              : error.message || 'AI响应失败，请重试';
             
             const { data: errorAiMessage, error: saveError } = await withTimeout(
               supabase
@@ -257,7 +309,8 @@ export const useChatStore = create<ChatState>()(
                 }])
                 .select()
                 .single(),
-              TIMEOUT
+              TIMEOUT,
+              '保存错误消息'
             );
 
             if (!saveError && errorAiMessage) {
@@ -272,14 +325,23 @@ export const useChatStore = create<ChatState>()(
                 messageError: errorMessage,
               }));
             }
+            
+            toast.error(errorMessage);
           }
           
         } catch (error: any) {
+          console.error('发送消息失败:', error);
+          const errorMessage = error.message === 'signal is aborted without reason'
+            ? '发送消息超时，请重试'
+            : error.message || '发送消息失败，请重试';
+            
           set({ 
             isAiResponding: false,
-            messageError: error.message 
+            messageError: errorMessage
           });
-          toast.error(error.message || '发送消息失败');
+          
+          toast.error(errorMessage);
+          throw error;
         }
       },
 
@@ -297,7 +359,8 @@ export const useChatStore = create<ChatState>()(
               .eq('id', id)
               .eq('user_id', user.id)
               .single(),
-            TIMEOUT
+            TIMEOUT,
+            '检查对话权限'
           );
 
           if (checkError || !conversation) {
@@ -309,7 +372,8 @@ export const useChatStore = create<ChatState>()(
               .from('conversations')
               .update({ title })
               .eq('id', id),
-            TIMEOUT
+            TIMEOUT,
+            '更新对话标题'
           );
 
           if (updateError) {
@@ -324,7 +388,6 @@ export const useChatStore = create<ChatState>()(
               ? { ...state.currentConversation, title }
               : state.currentConversation
           }));
-          
         } catch (error: any) {
           console.error('更新会话标题失败:', error);
           throw error;
@@ -344,18 +407,28 @@ export const useChatStore = create<ChatState>()(
               .delete()
               .eq('id', id)
               .eq('user_id', user.id),
-            TIMEOUT
+            TIMEOUT,
+            '删除对话'
           );
 
           if (error) {
             throw error;
           }
 
-          set((state) => ({
-            conversations: state.conversations.filter(conv => conv.id !== id),
-            currentConversation: state.currentConversation?.id === id ? null : state.currentConversation,
-            messages: state.currentConversation?.id === id ? [] : state.messages
-          }));
+          set((state) => {
+            const newState = {
+              conversations: state.conversations.filter(conv => conv.id !== id),
+              currentConversation: state.currentConversation?.id === id ? null : state.currentConversation,
+              messages: state.currentConversation?.id === id ? [] : state.messages
+            };
+            
+            // 如果删除了当前对话，自动切换到第一个对话
+            if (state.currentConversation?.id === id && newState.conversations.length > 0) {
+              get().setCurrentConversation(newState.conversations[0]);
+            }
+            
+            return newState;
+          });
         } catch (error: any) {
           console.error('删除对话失败:', error);
           throw error;
@@ -368,6 +441,16 @@ export const useChatStore = create<ChatState>()(
         conversations: state.conversations,
         currentConversation: state.currentConversation,
       }),
+      onRehydrateStorage: () => (state) => {
+        // 重新加载时清空消息和状态
+        if (state) {
+          state.messages = [];
+          state.isAiResponding = false;
+          state.messageError = null;
+          state.currentPage = 1;
+          state.hasMore = true;
+        }
+      }
     }
   )
 );
