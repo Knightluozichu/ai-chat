@@ -11,7 +11,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/lodash-es": "^4.17.12",
+    "@uiw/react-md-editor": "^4.0.5",
     "date-fns": "^3.3.1",
     "framer-motion": "^11.0.3",
     "lodash-es": "^4.17.21",
@@ -19,6 +23,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.29.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

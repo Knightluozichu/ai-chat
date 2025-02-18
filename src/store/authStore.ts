@@ -3,11 +3,7 @@ import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 import { useChatStore } from './chatStore';
 import toast from 'react-hot-toast';
-
-interface User {
-  id: string;
-  email: string;
-}
+import { User } from '@supabase/supabase-js';
 
 interface AuthState {
   user: User | null;
@@ -47,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       loading: true,
       
-      signIn: async (email, password) => {
+      signIn: async (email: string, password: string) => {
         try {
           // 1. 清理旧的状态
           useChatStore.getState().clearState();
@@ -66,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
           if (!data.user) throw new Error('登录失败：未获取到用户信息');
           
           // 3. 更新用户状态
-          set({ user: { id: data.user.id, email: data.user.email! } });
+          set({ user: data.user });
           toast.success('登录成功');
         } catch (error: any) {
           console.error('登录失败:', error);
@@ -77,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       
-      signUp: async (email, password) => {
+      signUp: async (email: string, password: string) => {
         try {
           // 1. 清理旧的状态
           useChatStore.getState().clearState();
@@ -102,7 +98,7 @@ export const useAuthStore = create<AuthState>()(
           if (!data.user) throw new Error('注册失败：未获取到用户信息');
           
           // 3. 更新用户状态
-          set({ user: { id: data.user.id, email: data.user.email! } });
+          set({ user: data.user });
           toast.success('注册成功');
         } catch (error: any) {
           console.error('注册失败:', error);
