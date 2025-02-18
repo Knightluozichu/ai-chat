@@ -1,0 +1,186 @@
+[
+  {
+    "name": "晋升提名",
+    "type": "folder",
+    "path": "/src/data/晋升提名",
+    "children": [
+      {
+        "name": "3-1",
+        "type": "folder",
+        "path": "/src/data/晋升提名/3-1",
+        "children": [
+          {
+            "name": "2022-H2-罗子初-部门内部晋升-展示PPT.pptx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/2022-H2-罗子初-部门内部晋升-展示PPT.pptx"
+          },
+          {
+            "name": "2022-H2-罗子初-部门内部晋升-展示PPT2.pptx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/2022-H2-罗子初-部门内部晋升-展示PPT2.pptx"
+          },
+          {
+            "name": "复审-最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/复审-最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx"
+          },
+          {
+            "name": "罗子初H2晋升演讲稿.txt",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/罗子初H2晋升演讲稿.txt"
+          },
+          {
+            "name": "虚拟技术部-Unity组-罗子初-晋升提名表.docx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/虚拟技术部-Unity组-罗子初-晋升提名表.docx"
+          },
+          {
+            "name": "最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx"
+          },
+          {
+            "name": "hellsing titles.md",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/hellsing titles.md"
+          },
+          {
+            "name": "hellsing工作总结.png",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/hellsing工作总结.png"
+          },
+          {
+            "name": "image1.png",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-1/image1.png"
+          }
+        ]
+      },
+      {
+        "name": "3-2",
+        "type": "folder",
+        "path": "/src/data/晋升提名/3-2",
+        "children": [
+          {
+            "name": "hellsing",
+            "type": "folder",
+            "path": "/src/data/晋升提名/3-2/hellsing",
+            "children": [
+              {
+                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-初稿.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-初稿.pptx"
+              },
+              {
+                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订1版.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订1版.pptx"
+              },
+              {
+                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md"
+              },
+              {
+                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx"
+              },
+              {
+                "name": "草稿大纲.doc",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/hellsing/草稿大纲.doc"
+              }
+            ]
+          },
+          {
+            "name": "other",
+            "type": "folder",
+            "path": "/src/data/晋升提名/3-2/other",
+            "children": [
+              {
+                "name": "2023年H1 多媒体通道-高炯炯（踏浪）-P3-2晋升答辩.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/other/2023年H1 多媒体通道-高炯炯（踏浪）-P3-2晋升答辩.pptx"
+              },
+              {
+                "name": "2023年H1-多媒体通道-黑桐-P3-3晋升答辩.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/other/2023年H1-多媒体通道-黑桐-P3-3晋升答辩.pptx"
+              },
+              {
+                "name": "33晋升述职-汤然（青石）-v3.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/other/33晋升述职-汤然（青石）-v3.pptx"
+              },
+              {
+                "name": "晋升答辩.pptx",
+                "type": "file",
+                "path": "/src/data/晋升提名/3-2/other/晋升答辩.pptx"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "专利",
+    "type": "folder",
+    "path": "/src/data/专利",
+    "children": [
+      {
+        "name": "【材料补充】基于Mediapipe面部捕捉算法.doc",
+        "type": "file",
+        "path": "/src/data/专利/【材料补充】基于Mediapipe面部捕捉算法.doc"
+      },
+      {
+        "name": "20230575_P1C235604_说明书权项摘要（修改稿）.docx",
+        "type": "file",
+        "path": "/src/data/专利/20230575_P1C235604_说明书权项摘要（修改稿）.docx"
+      },
+      {
+        "name": "20230576_P1C235605_说明书权项摘要（初稿）.docx",
+        "type": "file",
+        "path": "/src/data/专利/20230576_P1C235605_说明书权项摘要（初稿）.docx"
+      },
+      {
+        "name": "20230576_P1C235605_说明书权项摘要（修改稿）.docx",
+        "type": "file",
+        "path": "/src/data/专利/20230576_P1C235605_说明书权项摘要（修改稿）.docx"
+      },
+      {
+        "name": "发明专利技术交底书-【一种Unity资源的更新与管理及下载方法】.doc",
+        "type": "file",
+        "path": "/src/data/专利/发明专利技术交底书-【一种Unity资源的更新与管理及下载方法】.doc"
+      },
+      {
+        "name": "公司专利-打包及Mlive-0715(2).doc",
+        "type": "file",
+        "path": "/src/data/专利/公司专利-打包及Mlive-0715(2).doc"
+      },
+      {
+        "name": "公司专利-基于Mediapipe面部捕捉算法.doc",
+        "type": "file",
+        "path": "/src/data/专利/公司专利-基于Mediapipe面部捕捉算法.doc"
+      },
+      {
+        "name": "公司专利-CompatibleFaceBlendShape面捕数据结构 commit by hellsing-V2.doc",
+        "type": "file",
+        "path": "/src/data/专利/公司专利-CompatibleFaceBlendShape面捕数据结构 commit by hellsing-V2.doc"
+      }
+    ]
+  },
+  {
+    "name": "profile",
+    "type": "folder",
+    "path": "/src/data/profile",
+    "children": [
+      {
+        "name": "resume.md",
+        "type": "file",
+        "path": "/src/data/profile/resume.md"
+      }
+    ]
+  }
+]

@@ -4,12 +4,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "generate-structure": "node scripts/generate-file-structure.js",
+    "watch-structure": "node scripts/generate-file-structure.js --watch",
+    "predev": "npm run generate-structure",
     "dev": "vite",
-    "build": "vite build",
+    "prebuild": "npm run generate-structure",
+    "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-pdf-viewer/core": "^3.12.0",
+    "@react-pdf-viewer/default-layout": "^3.12.0",
     "@supabase/supabase-js": "^2.39.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/line-clamp": "^0.4.4",
@@ -18,12 +24,17 @@
     "@uiw/react-md-editor": "^4.0.5",
     "date-fns": "^3.3.1",
     "framer-motion": "^11.0.3",
+    "gray-matter": "^4.0.3",
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.344.0",
+    "pdfjs-dist": "^3.4.120",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
+    "react-markdown": "^9.0.3",
     "react-router-dom": "^6.29.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

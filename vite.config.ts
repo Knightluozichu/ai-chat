@@ -1,8 +1,22 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'markdown-raw',
+      transform(code, id) {
+        if (id.endsWith('.md')) {
+          return {
+            code: `export default ${JSON.stringify(code)}`,
+            map: null
+          };
+        }
+      }
+    }
+  ],
   build: {
     rollupOptions: {
       output: {
@@ -26,6 +40,9 @@ export default defineConfig({
     }
   },
   server: {
+    fs: {
+      strict: false
+    },
     warmup: {
       clientFiles: [
         './src/App.tsx',
@@ -39,5 +56,12 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['lucide-react']
-  }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  publicDir: 'public',
+  assetsInclude: ['**/*.md', '**/*.txt', '**/*.pdf', '**/*.doc', '**/*.docx', '**/*.ppt', '**/*.pptx']
 });
