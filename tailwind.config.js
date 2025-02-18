@@ -4,6 +4,18 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        primary: {
+          DEFAULT: 'var(--color-primary)',
+          hover: 'var(--color-primary-hover)',
+        },
+      },
+      borderRadius: {
+        DEFAULT: 'var(--border-radius)',
+      },
+      fontSize: {
+        base: 'var(--font-size-base)',
+      },
       typography: {
         DEFAULT: {
           css: {

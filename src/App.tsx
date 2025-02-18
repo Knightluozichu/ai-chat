@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/layout/Layout';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import { useAuthStore } from './store/authStore';
+import { useThemeStore } from './store/themeStore';
 
 // 前台页面
 const Home = lazy(() => import('./pages/Home'));
@@ -17,6 +18,7 @@ const DashboardLogin = lazy(() => import('./pages/dashboard/Login'));
 const DashboardRegister = lazy(() => import('./pages/dashboard/Register'));
 const DashboardPosts = lazy(() => import('./pages/dashboard/Posts'));
 const DashboardUsers = lazy(() => import('./pages/dashboard/Users'));
+const DashboardSettings = lazy(() => import('./pages/dashboard/Settings'));
 const PostEdit = lazy(() => import('./pages/dashboard/PostEdit'));
 
 // 加载动画组件
@@ -43,10 +45,23 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const { checkAuth } = useAuthStore();
+  const { applyTheme } = useThemeStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // 初始化主题
+  useEffect(() => {
+    applyTheme();
+    
+    // 监听系统主题变化
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyTheme();
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [applyTheme]);
 
   return (
     <Router>
@@ -96,6 +111,7 @@ function App() {
             >
               <Route path="posts" element={<DashboardPosts />} />
               <Route path="users" element={<DashboardUsers />} />
+              <Route path="settings" element={<DashboardSettings />} />
               <Route path="posts/:id/edit" element={<PostEdit />} />
               <Route index element={<Navigate to="posts" replace />} />
             </Route>
