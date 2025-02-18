@@ -18,7 +18,7 @@ const Login = () => {
 
     try {
       await signIn(email, password);
-      navigate('/dashboard/posts');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || '登录失败，请重试');
     } finally {

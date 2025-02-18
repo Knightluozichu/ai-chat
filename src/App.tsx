@@ -12,8 +12,10 @@ const Posts = lazy(() => import('./pages/Posts'));
 const PostView = lazy(() => import('./pages/PostView'));
 const About = lazy(() => import('./pages/About'));
 const AiAssistant = lazy(() => import('./pages/AiAssistant'));
+const Practice = lazy(() => import('./pages/Practice'));
 
 // 后台页面
+const DashboardHome = lazy(() => import('./pages/dashboard/Home'));
 const DashboardLogin = lazy(() => import('./pages/dashboard/Login'));
 const DashboardRegister = lazy(() => import('./pages/dashboard/Register'));
 const DashboardPosts = lazy(() => import('./pages/dashboard/Posts'));
@@ -84,6 +86,7 @@ function App() {
             <Route path="/posts" element={<Posts />} />
             <Route path="/posts/:slug" element={<PostView />} />
             <Route path="/about" element={<About />} />
+            <Route path="/practice" element={<Practice />} />
           </Route>
 
           {/* AI助手路由 - 独立布局 */}
@@ -109,11 +112,11 @@ function App() {
                 </PrivateRoute>
               }
             >
+              <Route index element={<DashboardHome />} />
               <Route path="posts" element={<DashboardPosts />} />
               <Route path="users" element={<DashboardUsers />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="posts/:id/edit" element={<PostEdit />} />
-              <Route index element={<Navigate to="posts" replace />} />
             </Route>
           </Route>
         </Routes>

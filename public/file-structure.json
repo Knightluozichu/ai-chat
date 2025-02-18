@@ -10,24 +10,9 @@
         "path": "/src/data/晋升提名/3-1",
         "children": [
           {
-            "name": "2022-H2-罗子初-部门内部晋升-展示PPT.pptx",
-            "type": "file",
-            "path": "/src/data/晋升提名/3-1/2022-H2-罗子初-部门内部晋升-展示PPT.pptx"
-          },
-          {
-            "name": "2022-H2-罗子初-部门内部晋升-展示PPT2.pptx",
-            "type": "file",
-            "path": "/src/data/晋升提名/3-1/2022-H2-罗子初-部门内部晋升-展示PPT2.pptx"
-          },
-          {
             "name": "复审-最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx",
             "type": "file",
             "path": "/src/data/晋升提名/3-1/复审-最终稿2022-H2-罗子初-部门内部晋升-展示PPT.pptx"
-          },
-          {
-            "name": "罗子初H2晋升演讲稿.txt",
-            "type": "file",
-            "path": "/src/data/晋升提名/3-1/罗子初H2晋升演讲稿.txt"
           },
           {
             "name": "虚拟技术部-Unity组-罗子初-晋升提名表.docx",
@@ -62,63 +47,19 @@
         "path": "/src/data/晋升提名/3-2",
         "children": [
           {
-            "name": "hellsing",
-            "type": "folder",
-            "path": "/src/data/晋升提名/3-2/hellsing",
-            "children": [
-              {
-                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-初稿.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-初稿.pptx"
-              },
-              {
-                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订1版.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订1版.pptx"
-              },
-              {
-                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md"
-              },
-              {
-                "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/hellsing/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx"
-              },
-              {
-                "name": "草稿大纲.doc",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/hellsing/草稿大纲.doc"
-              }
-            ]
+            "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-2/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩-修订版1大纲.md"
           },
           {
-            "name": "other",
-            "type": "folder",
-            "path": "/src/data/晋升提名/3-2/other",
-            "children": [
-              {
-                "name": "2023年H1 多媒体通道-高炯炯（踏浪）-P3-2晋升答辩.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/other/2023年H1 多媒体通道-高炯炯（踏浪）-P3-2晋升答辩.pptx"
-              },
-              {
-                "name": "2023年H1-多媒体通道-黑桐-P3-3晋升答辩.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/other/2023年H1-多媒体通道-黑桐-P3-3晋升答辩.pptx"
-              },
-              {
-                "name": "33晋升述职-汤然（青石）-v3.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/other/33晋升述职-汤然（青石）-v3.pptx"
-              },
-              {
-                "name": "晋升答辩.pptx",
-                "type": "file",
-                "path": "/src/data/晋升提名/3-2/other/晋升答辩.pptx"
-              }
-            ]
+            "name": "2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-2/2023年H2-TC多媒体通道-罗子初-P3-2晋升答辩稿.pptx"
+          },
+          {
+            "name": "草稿大纲.doc",
+            "type": "file",
+            "path": "/src/data/晋升提名/3-2/草稿大纲.doc"
           }
         ]
       }

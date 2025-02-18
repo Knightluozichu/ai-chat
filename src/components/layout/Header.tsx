@@ -6,6 +6,7 @@ import { Container } from './Container';
 const navigation = [
   { name: '首页', href: '/' },
   { name: '文章', href: '/posts' },
+  { name: '阿飞加练', href: '/practice' },
   { name: 'AI助手', href: '/ai-assistant' },
   { name: '关于', href: '/about' },
 ];

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Loader2, ArrowLeft } from 'lucide-react';
 import { usePostStore } from '../../store/postStore';
 import { useAuthStore } from '../../store/authStore';
 import { Post } from '../../types/post';
@@ -68,7 +68,16 @@ const Posts = () => {
     <div>
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">文章管理</h1>
+          <div className="flex items-center space-x-4">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              返回仪表盘
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">文章管理</h1>
+          </div>
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
             共 {totalCount} 篇文章
           </p>
