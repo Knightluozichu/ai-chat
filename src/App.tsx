@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/layout/Layout';
-import { DashboardLayout } from './components/dashboard/DashboardLayout';
+import DashboardLayout from './components/dashboard/DashboardLayout';
 import { useAuthStore } from './store/authStore';
 
 // 前台页面
@@ -16,6 +16,7 @@ const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const DashboardLogin = lazy(() => import('./pages/dashboard/Login'));
 const DashboardRegister = lazy(() => import('./pages/dashboard/Register'));
 const DashboardPosts = lazy(() => import('./pages/dashboard/Posts'));
+const DashboardUsers = lazy(() => import('./pages/dashboard/Users'));
 const PostEdit = lazy(() => import('./pages/dashboard/PostEdit'));
 
 // 加载动画组件
@@ -94,6 +95,7 @@ function App() {
               }
             >
               <Route path="posts" element={<DashboardPosts />} />
+              <Route path="users" element={<DashboardUsers />} />
               <Route path="posts/:id/edit" element={<PostEdit />} />
               <Route index element={<Navigate to="posts" replace />} />
             </Route>

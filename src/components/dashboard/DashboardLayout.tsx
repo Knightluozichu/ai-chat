@@ -11,23 +11,42 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { usePermission } from '../../hooks/usePermission';
 
-const navigation = [
-  { name: '文章管理', href: '/dashboard/posts', icon: FileText },
-  { name: '用户管理', href: '/dashboard/users', icon: Users },
-  { name: '系统设置', href: '/dashboard/settings', icon: Settings },
-];
-
-export const DashboardLayout = () => {
+const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuthStore();
+  const { can, permission } = usePermission();
+
+  const navigation = [
+    { 
+      name: '文章管理', 
+      href: '/dashboard/posts', 
+      icon: FileText,
+      show: () => can('manage_posts')
+    },
+    { 
+      name: '用户管理', 
+      href: '/dashboard/users', 
+      icon: Users,
+      show: () => can('manage_users')
+    },
+    { 
+      name: '系统设置', 
+      href: '/dashboard/settings', 
+      icon: Settings,
+      show: () => can('manage_users')
+    },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/dashboard/login');
   };
+
+  const visibleNavigation = navigation.filter(item => item.show());
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -55,7 +74,7 @@ export const DashboardLayout = () => {
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
@@ -85,7 +104,8 @@ export const DashboardLayout = () => {
                   {user?.email}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  管理员
+                  {permission?.role === 'admin' ? '管理员' : 
+                   permission?.role === 'editor' ? '编辑者' : '普通用户'}
                 </span>
               </div>
             </div>
@@ -135,4 +155,6 @@ export const DashboardLayout = () => {
       </div>
     </div>
   );
-}; 
+};
+
+export default DashboardLayout; 
