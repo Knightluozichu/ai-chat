@@ -105,10 +105,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true });
 
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await withSupabaseTimeout<PostgrestResponse<any>>(
         supabase
           .from('conversations')
-          .insert({ title })
+          .insert({
+            user_id: user?.id,  
+            title: title
+          })
           .select()
           .single()
       );
@@ -201,13 +205,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, isAiResponding: true });
 
       // 保存用户消息
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       const { data: userMessage, error: userError } = await withSupabaseTimeout<PostgrestResponse<any>>(
         supabase
           .from('messages')
           .insert({
             conversation_id: currentConversation.id,
             content,
-            role: 'user'
+            role: 'user',
+            user_id: currentUser?.id,  
           })
           .select()
           .single()
