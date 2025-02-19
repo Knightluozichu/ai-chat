@@ -31,7 +31,7 @@ interface ChatState {
   // Actions
   createConversation: (title: string) => Promise<void>;
   loadConversations: () => Promise<void>;
-  setCurrentConversation: (conversation: Conversation) => void;
+  setCurrentConversation: (conversation: Conversation) => Promise<void>;
   loadMessages: (conversationId: string) => Promise<void>;
   loadMoreMessages: () => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
@@ -148,34 +148,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  setCurrentConversation: (conversation) => {
+  setCurrentConversation: async (conversation) => {
     set({ currentConversation: conversation });
+    if (conversation) {
+      const { loadMessages } = get();
+      await loadMessages(conversation.id);
+    } else {
+      set({ messages: [] });
+    }
   },
 
   loadMessages: async (conversationId: string) => {
     try {
       set({ loading: true });
 
-      const { data, error } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true })
-          .limit(MESSAGES_PER_PAGE)
-      );
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      set({
+      set({ 
         messages: (data || []).map(normalizeMessage),
-        hasMore: (data?.length || 0) >= MESSAGES_PER_PAGE
+        loading: false 
       });
     } catch (error: any) {
       console.error('加载消息失败:', error);
+      set({ loading: false, error: error.message });
       throw error;
-    } finally {
-      set({ loading: false });
     }
   },
 
@@ -325,18 +327,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   deleteConversation: async (id: string) => {
     try {
-      const { error } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('conversations')
-          .delete()
-          .eq('id', id)
-      );
+      // 开始事务
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
 
-      if (error) throw error;
+      // 删除会话的所有消息
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversation_id', id);
 
+      if (messagesError) {
+        console.error('删除消息失败:', messagesError);
+        throw messagesError;
+      }
+
+      // 删除会话
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id); // 确保只能删除自己的会话
+
+      if (conversationError) {
+        console.error('删除会话失败:', conversationError);
+        throw conversationError;
+      }
+
+      // 更新前端状态
       set(state => ({
         conversations: state.conversations.filter(conv => conv.id !== id),
-        currentConversation: state.currentConversation?.id === id ? null : state.currentConversation
+        currentConversation: state.currentConversation?.id === id ? null : state.currentConversation,
+        messages: state.currentConversation?.id === id ? [] : state.messages
       }));
     } catch (error: any) {
       console.error('删除会话失败:', error);
