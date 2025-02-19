@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Image, Loader2, Eye } from 'lucide-react';
-import { usePostStore } from '../../store/postStore';
-import { postService } from '../../services/postService';
-import { Post } from '../../types/post';
-import toast from 'react-hot-toast';
-import MDEditor, { commands } from '@uiw/react-md-editor';
+import { Save, ArrowLeft, Loader2, Eye } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import MDEditor from '@uiw/react-md-editor';
 
 const PostEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
@@ -26,8 +23,6 @@ const PostEdit = () => {
     seo_title: '',
     seo_description: ''
   });
-
-  const { updatePost } = usePostStore();
 
   // 监听系统主题变化
   useEffect(() => {
@@ -43,23 +38,25 @@ const PostEdit = () => {
       if (!id) return;
       
       try {
-        const post = await postService.getPostById(id);
-        if (post) {
-          setPost(post);
+        const { data } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('id', id);
+        if (data && data.length > 0) {
+          setPost(data[0]);
           setFormData({
-            title: post.title,
-            slug: post.slug,
-            excerpt: post.excerpt || '',
-            content: post.content,
-            cover_image: post.cover_image || '',
-            is_featured: post.is_featured,
-            seo_title: post.seo_title || '',
-            seo_description: post.seo_description || ''
+            title: data[0].title,
+            slug: data[0].slug,
+            excerpt: data[0].excerpt || '',
+            content: data[0].content,
+            cover_image: data[0].cover_image || '',
+            is_featured: data[0].is_featured,
+            seo_title: data[0].seo_title || '',
+            seo_description: data[0].seo_description || ''
           });
         }
       } catch (error) {
         console.error('获取文章失败:', error);
-        toast.error('获取文章失败');
       } finally {
         setLoading(false);
       }
@@ -90,14 +87,20 @@ const PostEdit = () => {
 
     setSaving(true);
     try {
-      await updatePost(id, {
-        ...formData,
-        updated_at: new Date().toISOString()
-      });
-      toast.success('文章保存成功');
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          ...formData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      if (error) {
+        console.error('Failed to save post:', error);
+      } else {
+        console.log('文章保存成功');
+      }
     } catch (error) {
       console.error('Failed to save post:', error);
-      toast.error('保存文章失败');
     } finally {
       setSaving(false);
     }
@@ -213,22 +216,6 @@ const PostEdit = () => {
               enableScroll={true}
               data-color-mode={isDarkMode ? 'dark' : 'light'}
               highlightEnable={true}
-              components={{
-                code: ({ inline, children, className, ...props }) => {
-                  const match = /language-(\w+)/.exec(className || '');
-                  return !inline && match ? (
-                    <pre className={className} {...props}>
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    </pre>
-                  ) : (
-                    <code className={className} {...props}>
-                      {children}
-                    </code>
-                  );
-                },
-              }}
             />
           </div>
         </div>

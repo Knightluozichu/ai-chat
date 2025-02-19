@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { FileText, Image, AlertCircle, Download, ExternalLink } from 'lucide-react';
+import { FileText, AlertCircle, Download, ExternalLink } from 'lucide-react';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import '@react-pdf-viewer/core/lib/styles/index.css';
@@ -19,7 +19,7 @@ export const FilePreview = ({ filePath }: FilePreviewProps) => {
   const [error, setError] = useState<string | null>(null);
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
-  const ext = filePath.split('.').pop()?.toLowerCase();
+  const ext = filePath.split('.').pop() || '';
 
   useEffect(() => {
     const fetchContent = async () => {

@@ -1,8 +1,5 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { langchainClient } from '../lib/langchain';
-import toast from 'react-hot-toast';
-import { throttledProgress, smoothProgress, addProgressHistory, handleProgressError } from '../utils/progress';
 
 export interface File {
   id: string;
@@ -36,14 +33,14 @@ const ALLOWED_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
+export const useKnowledgeStore = create<KnowledgeState>((set) => ({
   files: [],
   loading: false,
   isFileLoading: false,
   searchQuery: '',
 
   uploadFile: async (file: Blob) => {
-    console.log('📤 开始上传文件:', (file as any).name);
+    console.log('开始上传文件:', (file as any).name);
     set({ isFileLoading: true });
     
     try {
@@ -63,17 +60,17 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       const filePath = `${user.id}/${fileName}`;
 
       // 上传文件到存储
-      console.log('🚀 开始上传到 Supabase 存储');
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      console.log('开始上传到 Supabase 存储');
+      const { error: uploadError } = await supabase.storage
         .from('files')
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('❌ 上传失败:', uploadError);
+        console.error('上传失败:', uploadError);
         throw uploadError;
       }
 
-      console.log('✅ 文件上传成功');
+      console.log('文件上传成功');
 
       const { data: { publicUrl } } = supabase.storage
         .from('files')
@@ -96,15 +93,16 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       if (error) throw error;
 
       // 开始处理文档
-      console.log('🔄 开始处理文档');
+      console.log('开始处理文档');
       try {
-        await langchainClient.processDocument({
-          file_id: fileRecord.id,
-          url: publicUrl,
-          user_id: user.id
-        });
+        await supabase
+          .from('files')
+          .update({
+            processing_status: 'processing'
+          })
+          .eq('id', fileRecord.id);
       } catch (error: any) {
-        console.error('❌ 文档处理失败:', error);
+        console.error('文档处理失败:', error);
         await supabase
           .from('files')
           .update({
@@ -117,8 +115,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       }
 
     } catch (error: any) {
-      console.error('❌ 文件上传过程失败:', error);
-      toast.error(error.message || '文件上传失败');
+      console.error('文件上传过程失败:', error);
       throw error;
     } finally {
       set({ isFileLoading: false });
@@ -159,16 +156,13 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       set(state => ({
         files: state.files.filter(file => file.id !== id)
       }));
-
-      toast.success('文件已删除');
     } catch (error: any) {
-      toast.error(error.message || '删除失败');
       throw error;
     }
   },
 
   loadFiles: async () => {
-    console.log('📚 开始加载文件列表');
+    console.log('开始加载文件列表');
     try {
       set({ loading: true });
 
@@ -178,16 +172,15 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('❌ 加载文件失败:', error);
+        console.error('加载文件失败:', error);
         throw error;
       }
 
-      console.log('✅ 文件加载成功:', data.length + '个文件');
+      console.log('文件加载成功:', data.length + '个文件');
       set({ files: data, loading: false });
     } catch (error: any) {
-      console.error('❌ 加载文件失败:', error);
+      console.error('加载文件失败:', error);
       set({ loading: false });
-      toast.error(error.message || '加载文件失败');
     }
   },
 
@@ -196,7 +189,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
   },
 
   subscribeToFileUpdates: () => {
-    console.log('🔌 初始化文件更新订阅');
+    console.log('初始化文件更新订阅');
     const subscription = supabase
       .channel('files-updates')
       .on(
@@ -207,12 +200,12 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
           table: 'files'
         },
         (payload) => {
-          console.log('📡 收到文件更新:', payload);
+          console.log('收到文件更新:', payload);
           const { eventType, new: newRecord, old: oldRecord } = payload;
           
           switch (eventType) {
             case 'INSERT':
-              console.log('➕ 新文件添加:', newRecord);
+              console.log('新文件添加:', newRecord);
               set(state => ({
                 ...state,
                 files: [newRecord as File, ...state.files]
@@ -220,7 +213,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
               break;
             
             case 'UPDATE':
-              console.log('🔄 文件状态更新:', {
+              console.log('文件状态更新:', {
                 id: newRecord.id,
                 oldStatus: oldRecord.processing_status,
                 newStatus: newRecord.processing_status
@@ -236,15 +229,15 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
               // 状态变更通知
               if (oldRecord.processing_status !== newRecord.processing_status) {
                 if (newRecord.processing_status === 'completed') {
-                  toast.success('文档处理完成');
+                  console.log('文档处理完成');
                 } else if (newRecord.processing_status === 'error') {
-                  toast.error('文档处理失败: ' + (newRecord.error_message || '未知错误'));
+                  console.log('文档处理失败: ' + (newRecord.error_message || '未知错误'));
                 }
               }
               break;
             
             case 'DELETE':
-              console.log('❌ 文件删除:', oldRecord);
+              console.log('文件删除:', oldRecord);
               set(state => ({
                 ...state,
                 files: state.files.filter(file => file.id !== oldRecord.id)
@@ -256,7 +249,7 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       .subscribe();
 
     return () => {
-      console.log('🔌 清理文件更新订阅');
+      console.log('清理文件更新订阅');
       subscription.unsubscribe();
     };
   }

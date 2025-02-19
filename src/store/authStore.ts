@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
-import { useChatStore } from './chatStore';
-import toast from 'react-hot-toast';
 import { User } from '@supabase/supabase-js';
 
 interface AuthState {
@@ -46,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
       signIn: async (email: string, password: string) => {
         try {
           // 1. 清理旧的状态
-          useChatStore.getState().clearState();
+          // useChatStore.getState().clearState();
           
           // 2. 执行登录
           const { data, error } = await withTimeout(
@@ -63,7 +61,7 @@ export const useAuthStore = create<AuthState>()(
           
           // 3. 更新用户状态
           set({ user: data.user });
-          toast.success('登录成功');
+          // toast.success('登录成功');
         } catch (error: any) {
           console.error('登录失败:', error);
           if (error.message.includes('Invalid login credentials')) {
@@ -76,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
       signUp: async (email: string, password: string) => {
         try {
           // 1. 清理旧的状态
-          useChatStore.getState().clearState();
+          // useChatStore.getState().clearState();
           
           // 2. 执行注册
           const { data, error } = await withTimeout(
@@ -99,7 +97,7 @@ export const useAuthStore = create<AuthState>()(
           
           // 3. 更新用户状态
           set({ user: data.user });
-          toast.success('注册成功');
+          // toast.success('注册成功');
         } catch (error: any) {
           console.error('注册失败:', error);
           if (error.message.includes('User already registered')) {
@@ -112,7 +110,7 @@ export const useAuthStore = create<AuthState>()(
       signOut: async () => {
         try {
           // 1. 清理聊天状态
-          useChatStore.getState().clearState();
+          // useChatStore.getState().clearState();
           
           // 2. 清理本地存储和认证状态
           localStorage.removeItem('sb-fmqreoeqzqdaqdtgqzkc-auth-token');
@@ -126,7 +124,7 @@ export const useAuthStore = create<AuthState>()(
             console.warn('Supabase 登出异常:', error);
           }
           
-          toast.success('已退出登录');
+          // toast.success('已退出登录');
         } catch (error: any) {
           // 5. 即使发生错误，也确保用户处于登出状态
           console.error('退出失败:', error);
@@ -161,8 +159,15 @@ export const useAuthStore = create<AuthState>()(
             }
             
             if (user) {
-              set({ 
-                user: { id: user.id, email: user.email! },
+              set({
+                user: {
+                  id: user.id,
+                  email: user.email!,
+                  app_metadata: user.app_metadata,
+                  user_metadata: user.user_metadata,
+                  aud: user.aud,
+                  created_at: user.created_at
+                },
                 loading: false 
               });
               return;
@@ -177,15 +182,17 @@ export const useAuthStore = create<AuthState>()(
           set({ user: null, loading: false });
           
           if (process.env.NODE_ENV === 'development') {
-            toast.error(`认证检查失败: ${error.message}`);
+            // toast.error(`认证检查失败: ${error.message}`);
           }
         }
       },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user }),
-      storage: localStorage
+      partialize: (state: AuthState) => ({
+        user: state.user,
+        loading: state.loading,
+      }),
     }
   )
 );

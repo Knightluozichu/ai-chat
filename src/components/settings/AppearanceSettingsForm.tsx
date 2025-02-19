@@ -55,6 +55,27 @@ export const AppearanceSettingsForm = ({ value, onSave }: AppearanceSettingsForm
     }
   };
 
+  const handleThemeChange = (themeValue: string) => {
+    setFormData({ 
+      ...formData, 
+      theme: themeValue as ThemeMode
+    });
+  };
+
+  const handleColorChange = (colorValue: string) => {
+    setFormData({ 
+      ...formData, 
+      primaryColor: colorValue as ThemeColor
+    });
+  };
+
+  const handleSizeChange = (sizeValue: string, type: 'fontSize' | 'borderRadius') => {
+    setFormData({ 
+      ...formData, 
+      [type]: sizeValue as ThemeSize
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* 主题模式选择 */}
@@ -67,7 +88,7 @@ export const AppearanceSettingsForm = ({ value, onSave }: AppearanceSettingsForm
             <button
               key={themeValue}
               type="button"
-              onClick={() => setFormData({ ...formData, theme: themeValue })}
+              onClick={() => handleThemeChange(themeValue)}
               className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-colors ${
                 formData.theme === themeValue
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/50'
@@ -101,7 +122,7 @@ export const AppearanceSettingsForm = ({ value, onSave }: AppearanceSettingsForm
             <button
               key={colorValue}
               type="button"
-              onClick={() => setFormData({ ...formData, primaryColor: colorValue })}
+              onClick={() => handleColorChange(colorValue)}
               className={`group relative rounded-full p-1 ${
                 formData.primaryColor === colorValue
                   ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-blue-500'
@@ -125,7 +146,7 @@ export const AppearanceSettingsForm = ({ value, onSave }: AppearanceSettingsForm
             <button
               key={sizeValue}
               type="button"
-              onClick={() => setFormData({ ...formData, fontSize: sizeValue })}
+              onClick={() => handleSizeChange(sizeValue, 'fontSize')}
               className={`px-4 py-2 rounded-lg ${
                 formData.fontSize === sizeValue
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
@@ -148,7 +169,7 @@ export const AppearanceSettingsForm = ({ value, onSave }: AppearanceSettingsForm
             <button
               key={sizeValue}
               type="button"
-              onClick={() => setFormData({ ...formData, borderRadius: sizeValue })}
+              onClick={() => handleSizeChange(sizeValue, 'borderRadius')}
               className={`px-4 py-2 rounded-lg ${
                 formData.borderRadius === sizeValue
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'

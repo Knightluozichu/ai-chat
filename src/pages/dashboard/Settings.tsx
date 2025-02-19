@@ -114,7 +114,11 @@ export default function Settings() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             {activeCategory === 'basic' && (
               <BasicSettingsForm
-                value={getCategorySettings('basic')}
+                value={{
+                  title: getCategorySettings('basic').title || '',
+                  description: getCategorySettings('basic').description || '',
+                  logo: getCategorySettings('basic').logo
+                }}
                 onSave={(value) => handleSaveSettings('basic', value)}
               />
             )}

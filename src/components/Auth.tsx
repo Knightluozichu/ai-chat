@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useChatStore } from '../store/chatStore';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 export function Auth() {
   const [email, setEmail] = useState('');
@@ -8,6 +10,7 @@ export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const { signIn, signUp } = useAuthStore();
   const { loadConversations } = useChatStore();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,9 +18,11 @@ export function Auth() {
       if (isLogin) {
         await signIn(email, password);
         await loadConversations();
+        navigate('/chats');
       } else {
         await signUp(email, password);
         await loadConversations();
+        navigate('/chats');
       }
     } catch (error: any) {
       if (error.message === 'User already registered') {

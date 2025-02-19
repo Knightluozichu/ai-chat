@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { zhCN } from 'date-fns/locale';

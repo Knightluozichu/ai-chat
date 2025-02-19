@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '../layout/Container';
 import { Clock, ArrowUpRight } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { Post } from '../../types/post';
-import { format } from 'date-fns';
-import { zhCN } from 'date-fns/locale';
 import { usePostStore } from '../../store/postStore';
+import { supabase } from '../../lib/supabase';
+import type { Post } from '../../types/post';
 
 const PostCard = ({ post }: { post: Post }) => {
   const { setCurrentViewPost } = usePostStore();
@@ -57,10 +55,10 @@ const PostCard = ({ post }: { post: Post }) => {
 };
 
 export const FeaturedPosts = () => {
-  const [loading, setLoading] = useState(true);
-  const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [featuredPosts, setFeaturedPosts] = React.useState<Post[]>([]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchFeaturedPosts = async () => {
       try {
         setLoading(true);

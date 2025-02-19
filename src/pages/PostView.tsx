@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Container } from '../components/layout/Container';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Post } from '../types/post';
 import { supabase } from '../lib/supabase';
 import MDEditor from '@uiw/react-md-editor';
 import { usePostStore } from '../store/postStore';
 
 export default function PostView() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { currentViewPost, setCurrentViewPost } = usePostStore();

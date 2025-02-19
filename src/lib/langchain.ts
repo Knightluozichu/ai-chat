@@ -1,5 +1,3 @@
-import toast from 'react-hot-toast';
-
 interface ChatResponse {
   content: string;
   error?: string;

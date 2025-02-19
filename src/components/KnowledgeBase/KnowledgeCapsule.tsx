@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Database, ChevronLeft, ChevronRight } from 'lucide-react';
 import { KnowledgePanel } from './KnowledgePanel';
 import { motion, AnimatePresence } from 'framer-motion';

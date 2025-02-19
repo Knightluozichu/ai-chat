@@ -34,22 +34,28 @@ export function getPreviewPath(filePath: string) {
   return path;
 }
 
-export async function getFileStructure(path: string): Promise<FileItem[]> {
+async function getCachedStructure(): Promise<FileItem[] | null> {
+  return cachedStructure;
+}
+
+export async function getFileStructure(): Promise<FileItem[]> {
   try {
     // 如果已经缓存了文件结构，直接返回
-    if (cachedStructure) {
-      return cachedStructure;
+    const cachedStructure = await getCachedStructure();
+    if (!cachedStructure) {
+      return [];
     }
+    return cachedStructure;
 
     // 从静态 JSON 文件获取文件结构
-    const response = await fetch('/file-structure.json');
-    if (!response.ok) {
-      throw new Error('Failed to fetch file structure');
-    }
+    // const response = await fetch('/file-structure.json');
+    // if (!response.ok) {
+    //   throw new Error('Failed to fetch file structure');
+    // }
     
     // 缓存文件结构
-    cachedStructure = await response.json();
-    return cachedStructure;
+    // cachedStructure = await response.json();
+    // return cachedStructure;
   } catch (error) {
     console.error('Error fetching file structure:', error);
     return [];

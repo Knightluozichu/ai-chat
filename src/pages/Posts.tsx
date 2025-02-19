@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Container } from '../components/layout/Container';
 import { format } from 'date-fns';
@@ -105,12 +105,12 @@ export default function Posts() {
                 onClick={(e) => handlePostClick(e, post)}
               >
                 <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-shadow hover:shadow-md">
-                  {post.cover_url && (
-                    <div className="aspect-w-16 aspect-h-9">
+                  {post.cover_image && (
+                    <div className="w-32 h-20 overflow-hidden rounded">
                       <img
-                        src={post.cover_url}
+                        className="w-full h-full object-cover"
+                        src={post.cover_image}
                         alt={post.title}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   )}

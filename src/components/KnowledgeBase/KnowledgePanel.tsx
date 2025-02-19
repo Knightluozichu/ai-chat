@@ -1,10 +1,7 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Upload, Search, FileText, Trash2, Download, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Upload, Search, FileText, Trash2, Download, Loader2, AlertCircle } from 'lucide-react';
 import { useKnowledgeStore } from '../../store/knowledgeStore';
-import { langchainClient } from '../../lib/langchain';
-import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getProgressHistory } from '../../utils/progress';
 import { FileLoadingOverlay } from './FileLoadingOverlay';
 
 interface KnowledgePanelProps {

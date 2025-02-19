@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { Category, Question, AnswerResult } from '../types/practice';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 interface PracticeState {
   categories: Category[];
   currentCategory: Category | null;
@@ -55,9 +58,9 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
 
       if (!data || data.length === 0) {
         // 尝试直接通过 REST API 获取
-        const response = await fetch(`${supabase.supabaseUrl}/rest/v1/categories?select=*&order=order_index.asc`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/categories?select=*&order=order_index.asc`, {
           headers: {
-            'apikey': supabaseAnonKey,
+            'apikey': SUPABASE_ANON_KEY,
             'Content-Type': 'application/json'
           }
         });
@@ -107,7 +110,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
       set({ loading: true, error: null, showAnswer: false });
 
       // 记录实际发送的参数
-      const params = { p_category_id: parseInt(categoryId) };
+      const params = { p_category_id: String(categoryId) }; // 使用 String() 而不是 parseInt()
       console.log('发送的参数:', JSON.stringify(params));
       
       const { data, error } = await supabase

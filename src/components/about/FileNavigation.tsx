@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   Folder,
-  File,
   ChevronRight,
   ChevronDown,
   FileText,
@@ -10,7 +9,6 @@ import {
   Presentation,
   Table,
   Archive,
-  HelpCircle,
   ExternalLink,
   Loader2
 } from 'lucide-react';
@@ -19,67 +17,32 @@ import { getFileStructure } from '../../utils/fileUtils';
 
 // 文件类型图标映射
 const getFileIcon = (fileName: string) => {
-  const ext = fileName.split('.').pop()?.toLowerCase();
+  const ext = fileName.split('.').pop() || '';
   switch (ext) {
     case 'md':
       return <Code className="w-4 h-4 mr-2 text-emerald-500" />;
     case 'txt':
-      return <FileText className="w-4 h-4 mr-2 text-gray-500" />;
-    case 'doc':
-    case 'docx':
       return <FileText className="w-4 h-4 mr-2 text-blue-500" />;
-    case 'ppt':
-    case 'pptx':
-      return <Presentation className="w-4 h-4 mr-2 text-orange-500" />;
-    case 'xls':
-    case 'xlsx':
-    case 'csv':
-      return <Table className="w-4 h-4 mr-2 text-green-500" />;
     case 'jpg':
     case 'jpeg':
     case 'png':
     case 'gif':
       return <Image className="w-4 h-4 mr-2 text-purple-500" />;
+    case 'doc':
+    case 'docx':
+      return <FileText className="w-4 h-4 mr-2 text-blue-500" />;
+    case 'ppt':
+    case 'pptx':
+      return <Presentation className="w-4 h-4 mr-2 text-red-500" />;
+    case 'xls':
+    case 'xlsx':
+      return <Table className="w-4 h-4 mr-2 text-green-500" />;
     case 'zip':
     case 'rar':
-    case '7z':
       return <Archive className="w-4 h-4 mr-2 text-yellow-500" />;
     default:
-      return <HelpCircle className="w-4 h-4 mr-2 text-gray-500" />;
+      return <FileText className="w-4 h-4 mr-2 text-gray-500" />;
   }
-};
-
-// 文件预览处理
-const handleFilePreview = (path: string) => {
-  const ext = path.split('.').pop()?.toLowerCase();
-  
-  // 图片文件直接在新标签页打开
-  if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-    window.open(path, '_blank');
-    return;
-  }
-
-  // Markdown 文件在当前页面渲染
-  if (ext === 'md') {
-    // TODO: 实现 Markdown 预览
-    console.log('Preview markdown:', path);
-    return;
-  }
-
-  // Office 文件使用 Office Online Viewer
-  if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) {
-    const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(window.location.origin + path)}`;
-    window.open(viewerUrl, '_blank');
-    return;
-  }
-
-  // 其他文件直接下载
-  const link = document.createElement('a');
-  link.href = path;
-  link.download = path.split('/').pop();
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };
 
 interface FileNavigationProps {
@@ -165,7 +128,7 @@ const FileTreeItem = ({ item, level = 0, selectedFile, onSelect }: FileTreeItemP
   );
 };
 
-export const FileNavigation = ({ onFileSelect, defaultFile }: FileNavigationProps) => {
+export const FileNavigation: React.FC<FileNavigationProps> = ({ onFileSelect, defaultFile }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [fileStructure, setFileStructure] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +138,7 @@ export const FileNavigation = ({ onFileSelect, defaultFile }: FileNavigationProp
     const fetchFileStructure = async () => {
       try {
         setLoading(true);
-        const data = await getFileStructure('/src/data');
+        const data = await getFileStructure();
         setFileStructure(data);
       } catch (error) {
         console.error('Error fetching file structure:', error);
