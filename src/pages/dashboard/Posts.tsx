@@ -116,89 +116,67 @@ const Posts = () => {
           </div>
         </div>
 
-        <div className="mt-6 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="col-span-full flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    标题
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    浏览量
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    发布时间
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {posts.map((post) => (
-                  <tr key={post.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {post.title}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleStatusChange(post)}
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          post.status === 'published'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                        }`}
-                      >
-                        {post.status === 'published' ? '已发布' : '草稿'}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+            posts.map((post) => (
+              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    {post.title}
+                  </h3>
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <div className="flex items-center">
+                      <Eye className="h-4 w-4 mr-1" />
                       {post.view_count}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    </div>
+                    <div>
                       {post.published_at
                         ? format(new Date(post.published_at), 'yyyy年MM月dd日', { locale: zhCN })
                         : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Link
-                          to={`/posts/${post.slug}`}
-                          className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                          title="查看"
-                        >
-                          <Eye className="h-5 w-5" />
-                        </Link>
-                        <Link
-                          to={`/dashboard/posts/${post.id}/edit`}
-                          className="text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
-                          title="编辑"
-                        >
-                          <Edit2 className="h-5 w-5" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-red-400 hover:text-red-500 dark:hover:text-red-300"
-                          title="删除"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => handleStatusChange(post)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        post.status === 'published'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                      }`}
+                    >
+                      {post.status === 'published' ? '已发布' : '草稿'}
+                    </button>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        to={`/posts/${post.slug}`}
+                        className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        title="查看"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </Link>
+                      <Link
+                        to={`/dashboard/posts/${post.id}/edit`}
+                        className="text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+                        title="编辑"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </Link>
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="text-red-400 hover:text-red-500 dark:hover:text-red-300"
+                        title="删除"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -214,4 +192,4 @@ const Posts = () => {
   );
 };
 
-export default Posts; 
+export default Posts;

@@ -105,15 +105,13 @@ export default function Posts() {
                 onClick={(e) => handlePostClick(e, post)}
               >
                 <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden transition-shadow hover:shadow-md">
-                  {post.cover_image && (
-                    <div className="w-32 h-20 overflow-hidden rounded">
-                      <img
-                        className="w-full h-full object-cover"
-                        src={post.cover_image}
-                        alt={post.title}
-                      />
-                    </div>
-                  )}
+                  <div className="aspect-[16/9] w-full overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={post.cover_image || '/assets/doc_default.png'}
+                      alt={post.title}
+                    />
+                  </div>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 group-hover:text-blue-500">
                       {post.title}
