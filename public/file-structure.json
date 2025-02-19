@@ -118,6 +118,11 @@
     "path": "/src/data/profile",
     "children": [
       {
+        "name": "ai_resume.md",
+        "type": "file",
+        "path": "/src/data/profile/ai_resume.md"
+      },
+      {
         "name": "resume.md",
         "type": "file",
         "path": "/src/data/profile/resume.md"
