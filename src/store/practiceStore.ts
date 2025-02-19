@@ -37,28 +37,43 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
       console.log('开始获取分类列表...');
       set({ loading: true, error: null });
 
-      // 打印请求信息
-      console.log('Supabase URL:', supabase.supabaseUrl);
-      console.log('请求配置:', {
-        headers: supabase.rest.headers
-      });
-
+      // 使用公开访问模式
       const { data, error, status, statusText } = await supabase
         .from('categories')
         .select('*')
-        .order('order_index');
+        .order('order_index', { ascending: true })
+        .throwOnError();  // 添加这行以确保错误被正确捕获
 
-      // 打印响应信息
-      console.log('响应状态:', status, statusText);
-      console.log('响应数据:', data);
-      console.log('响应错误:', error);
-
-      if (error) {
-        console.error('Supabase错误:', error);
-        throw error;
-      }
+      // 打印详细的响应信息
+      console.log('响应详情:', {
+        status,
+        statusText,
+        dataLength: data?.length ?? 0,
+        error,
+        data: data ?? []
+      });
 
       if (!data || data.length === 0) {
+        // 尝试直接通过 REST API 获取
+        const response = await fetch(`${supabase.supabaseUrl}/rest/v1/categories?select=*&order=order_index.asc`, {
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const jsonData = await response.json();
+        console.log('REST API响应:', jsonData);
+        
+        if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
+          set({ categories: jsonData });
+          return;
+        }
+        
         console.warn('没有找到任何分类数据');
         set({ categories: [] });
         return;
@@ -78,26 +93,39 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   },
 
   setCurrentCategory: (category) => {
+    console.log('设置当前分类:', category);
     set({ currentCategory: category });
     if (category) {
+      console.log('准备获取分类题目, id:', category.id);
       get().fetchRandomQuestion(category.id);
     }
   },
 
   fetchRandomQuestion: async (categoryId) => {
     try {
+      console.log('调用 get_random_question, categoryId:', categoryId);
       set({ loading: true, error: null, showAnswer: false });
+
+      // 记录实际发送的参数
+      const params = { p_category_id: parseInt(categoryId) };
+      console.log('发送的参数:', JSON.stringify(params));
+      
       const { data, error } = await supabase
-        .rpc('get_random_question', { p_category_id: categoryId });
+        .rpc('get_random_question', params);
+
+      console.log('get_random_question 响应:', JSON.stringify({ data, error }));
 
       if (error) throw error;
-      if (data && data.length > 0) {
-        set({ currentQuestion: data[0] });
+      
+      if (data) {
+        console.log('获取到题目:', JSON.stringify(data));
+        set({ currentQuestion: data });
       } else {
+        console.warn('没有找到题目, categoryId:', categoryId);
         set({ error: '该分类下暂无题目' });
       }
     } catch (error) {
-      console.error('Error fetching question:', error);
+      console.error('获取题目失败:', error);
       set({ error: '加载题目失败' });
     } finally {
       set({ loading: false });

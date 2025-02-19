@@ -1,3 +1,6 @@
+@import 'prismjs/themes/prism.css';
+/* 或者使用暗色主题 */
+@import 'prismjs/themes/prism-tomorrow.css';
 @import '@uiw/react-md-editor/markdown-editor.css';
 @import '@uiw/react-markdown-preview/markdown.css';
 @import './styles/markdown-editor.css';
@@ -5,6 +8,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 代码高亮样式 */
+.wmde-markdown pre {
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.wmde-markdown code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 语法高亮颜色 */
+.wmde-markdown .token.comment { color: #6a9955; }
+.wmde-markdown .token.string { color: #ce9178; }
+.wmde-markdown .token.number { color: #b5cea8; }
+.wmde-markdown .token.keyword { color: #569cd6; }
+.wmde-markdown .token.function { color: #dcdcaa; }
+.wmde-markdown .token.class-name { color: #4ec9b0; }
+.wmde-markdown .token.operator { color: #d4d4d4; }
+.wmde-markdown .token.punctuation { color: #d4d4d4; }
+
+/* 亮色主题 */
+[data-color-mode="light"] .wmde-markdown pre {
+  background-color: #f6f8fa;
+}
+
+[data-color-mode="light"] .wmde-markdown .token.comment { color: #6a737d; }
+[data-color-mode="light"] .wmde-markdown .token.string { color: #032f62; }
+[data-color-mode="light"] .wmde-markdown .token.number { color: #005cc5; }
+[data-color-mode="light"] .wmde-markdown .token.keyword { color: #d73a49; }
+[data-color-mode="light"] .wmde-markdown .token.function { color: #6f42c1; }
+[data-color-mode="light"] .wmde-markdown .token.class-name { color: #6f42c1; }
+[data-color-mode="light"] .wmde-markdown .token.operator { color: #005cc5; }
+[data-color-mode="light"] .wmde-markdown .token.punctuation { color: #24292e; }
 
 @keyframes fade-in {
   from {

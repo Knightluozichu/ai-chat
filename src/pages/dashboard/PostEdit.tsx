@@ -5,7 +5,7 @@ import { usePostStore } from '../../store/postStore';
 import { postService } from '../../services/postService';
 import { Post } from '../../types/post';
 import toast from 'react-hot-toast';
-import MDEditor from '@uiw/react-md-editor';
+import MDEditor, { commands } from '@uiw/react-md-editor';
 
 const PostEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +13,9 @@ const PostEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [post, setPost] = useState<Post | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -25,6 +28,15 @@ const PostEdit = () => {
   });
 
   const { updatePost } = usePostStore();
+
+  // 监听系统主题变化
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -108,7 +120,7 @@ const PostEdit = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6" data-color-mode="light">
+    <div className={`max-w-5xl mx-auto px-4 py-6 ${isDarkMode ? 'dark' : ''}`}>
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate('/dashboard/posts')}
@@ -186,7 +198,7 @@ const PostEdit = () => {
           />
         </div>
 
-        <div data-color-mode="light">
+        <div>
           <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             内容
           </label>
@@ -199,8 +211,23 @@ const PostEdit = () => {
               className="w-full"
               hideToolbar={false}
               enableScroll={true}
-              textareaProps={{
-                placeholder: '使用 Markdown 编写文章内容...'
+              data-color-mode={isDarkMode ? 'dark' : 'light'}
+              highlightEnable={true}
+              components={{
+                code: ({ inline, children, className, ...props }) => {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <pre className={className} {...props}>
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    </pre>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
               }}
             />
           </div>
@@ -210,24 +237,14 @@ const PostEdit = () => {
           <label htmlFor="cover_image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             封面图片
           </label>
-          <div className="mt-1 flex items-center space-x-4">
-            <input
-              type="text"
-              id="cover_image"
-              name="cover_image"
-              value={formData.cover_image}
-              onChange={handleInputChange}
-              placeholder="输入图片 URL"
-              className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
-            />
-            {formData.cover_image && (
-              <img
-                src={formData.cover_image}
-                alt="封面预览"
-                className="h-20 w-20 object-cover rounded"
-              />
-            )}
-          </div>
+          <input
+            type="text"
+            id="cover_image"
+            name="cover_image"
+            value={formData.cover_image}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+          />
         </div>
 
         <div className="flex items-center">
@@ -237,47 +254,43 @@ const PostEdit = () => {
             name="is_featured"
             checked={formData.is_featured}
             onChange={handleCheckboxChange}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <label htmlFor="is_featured" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-            设为精选文章
+            特色文章
           </label>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">SEO 设置</h3>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="seo_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                SEO 标题
-              </label>
-              <input
-                type="text"
-                id="seo_title"
-                name="seo_title"
-                value={formData.seo_title}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="seo_description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                SEO 描述
-              </label>
-              <textarea
-                id="seo_description"
-                name="seo_description"
-                value={formData.seo_description}
-                onChange={handleInputChange}
-                rows={3}
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <div>
+          <label htmlFor="seo_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            SEO 标题
+          </label>
+          <input
+            type="text"
+            id="seo_title"
+            name="seo_title"
+            value={formData.seo_title}
+            onChange={handleInputChange}
+            className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="seo_description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            SEO 描述
+          </label>
+          <textarea
+            id="seo_description"
+            name="seo_description"
+            value={formData.seo_description}
+            onChange={handleInputChange}
+            rows={3}
+            className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+          />
         </div>
       </form>
     </div>
   );
 };
 
-export default PostEdit; 
+export default PostEdit;
