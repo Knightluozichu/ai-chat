@@ -122,20 +122,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (!user?.id) {
         throw new Error('User not authenticated');
       }
-      const { data, error } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('conversations')
-          .insert({
-            user_id: user?.id,  
-            title: title
-          })
-          .select()
-          .single()
-      );
 
-      if (error) throw error;
+      // 先插入会话
+      const { data: insertedData, error: insertError } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          title: title
+        })
+        .select('*')
+        .single();
 
-      const conversation = normalizeConversation(data);
+      if (insertError) throw insertError;
+      if (!insertedData) throw new Error('Failed to create conversation');
+
+      const conversation = normalizeConversation(insertedData);
       set(state => ({
         conversations: [conversation, ...state.conversations],
         currentConversation: conversation
