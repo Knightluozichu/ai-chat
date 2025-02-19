@@ -76,8 +76,7 @@ const AiAssistant = () => {
     sendMessage,
     isAiResponding,
     loadConversations,
-    conversations,
-    loading
+    conversations
   } = useChatStore();
   const { user, signOut } = useAuthStore();
   const [input, setInput] = useState('');
