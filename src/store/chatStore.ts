@@ -303,14 +303,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   updateConversationTitle: async (id: string, title: string) => {
     try {
-      const { error } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('conversations')
-          .update({ title })
-          .eq('id', id)
-      );
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
 
-      if (error) throw error;
+      const { error: updateError } = await supabase
+        .from('conversations')
+        .update({ title })
+        .eq('id', id)
+        .eq('user_id', user.id); // 确保只能更新自己的会话
+
+      if (updateError) throw updateError;
 
       set(state => ({
         conversations: state.conversations.map(conv =>
