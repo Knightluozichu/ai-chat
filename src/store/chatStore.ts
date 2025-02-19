@@ -7,14 +7,14 @@ import { PostgrestResponse } from '@supabase/supabase-js';
 interface Message {
   id: string;
   content: string;
-  isUser: boolean;
-  createdAt: string;
+  is_user: boolean;
+  created_at: string;
 }
 
 interface Conversation {
   id: string;
   title: string;
-  createdAt: string;
+  created_at: string;
 }
 
 interface ChatState {
@@ -45,8 +45,8 @@ const MESSAGES_PER_PAGE = 20;
 const normalizeMessage = (message: any): Message => ({
   id: message.id,
   content: message.content,
-  isUser: message.is_user,
-  createdAt: message.created_at,
+  is_user: message.is_user,
+  created_at: message.created_at,
 });
 
 const normalizeConversation = (conversation: any): Conversation => {
@@ -54,7 +54,7 @@ const normalizeConversation = (conversation: any): Conversation => {
   return {
     id: conversation.id,
     title: conversation.title || '新对话',
-    createdAt: conversation.created_at,
+    created_at: conversation.created_at,
   };
 };
 
@@ -197,7 +197,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           .from('messages')
           .select('*')
           .eq('conversation_id', currentConversation.id)
-          .lt('created_at', lastMessage.createdAt)
+          .lt('created_at', lastMessage.created_at)
           .order('created_at', { ascending: true })
           .limit(MESSAGES_PER_PAGE)
       );
