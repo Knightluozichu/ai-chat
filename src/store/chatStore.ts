@@ -48,11 +48,14 @@ const normalizeMessage = (message: any): Message => ({
   createdAt: message.created_at,
 });
 
-const normalizeConversation = (conversation: any): Conversation => ({
-  id: conversation.id,
-  title: conversation.title || '新对话',
-  createdAt: conversation.created_at,
-});
+const normalizeConversation = (conversation: any): Conversation => {
+  console.log('Normalizing conversation:', conversation);
+  return {
+    id: conversation.id,
+    title: conversation.title || '新对话',
+    createdAt: conversation.created_at,
+  };
+};
 
 export const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
@@ -81,21 +84,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   loadConversations: async () => {
     try {
-      set({ loading: true });
+      set({ loading: true, error: null });
 
-      const { data, error } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('conversations')
-          .select('*')
-          .order('created_at', { ascending: false })
-      );
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Loading conversations for user:', user.id);
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      set({ conversations: (data || []).map(normalizeConversation) });
+      console.log('Received conversations:', data);
+      const normalizedConversations = (data || []).map(normalizeConversation);
+      console.log('Normalized conversations:', normalizedConversations);
+      
+      set({ conversations: normalizedConversations });
     } catch (error: any) {
       console.error('加载会话列表失败:', error);
-      throw error;
+      set({ error: error.message });
     } finally {
       set({ loading: false });
     }
@@ -106,6 +118,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true });
 
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
       const { data, error } = await withSupabaseTimeout<PostgrestResponse<any>>(
         supabase
           .from('conversations')

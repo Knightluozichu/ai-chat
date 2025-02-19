@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, memo } from 'react';
+import { useState, lazy, Suspense, memo, useEffect } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import { ResizableSidebar } from '../components/ResizableSidebar';
@@ -74,10 +74,25 @@ const AiAssistant = () => {
   const {
     currentConversation,
     sendMessage,
-    isAiResponding
+    isAiResponding,
+    loadConversations,
+    conversations,
+    loading
   } = useChatStore();
   const { user, signOut } = useAuthStore();
   const [input, setInput] = useState('');
+
+  useEffect(() => {
+    console.log('Current conversations:', conversations);
+    // 加载会话列表
+    loadConversations().catch(error => {
+      console.error('Failed to load conversations:', error);
+    });
+  }, [loadConversations]);
+
+  useEffect(() => {
+    console.log('Conversations updated:', conversations);
+  }, [conversations]);
 
   const handleSend = async () => {
     if (!input.trim() || isAiResponding) return;
