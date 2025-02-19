@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { withSupabaseTimeout } from '../utils/supabaseUtils';
+import { langchainClient } from '../lib/langchain';
 import { PostgrestResponse } from '@supabase/supabase-js';
 
 interface Message {
@@ -220,6 +221,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, isAiResponding: true });
 
       // 保存用户消息
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { data: userMessage, error: userError } = await supabase
         .from('messages')
         .insert({
@@ -236,13 +242,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: [...state.messages, normalizeMessage(userMessage)]
       }));
 
-      // 保存 AI 回复
+      // 调用 LangChain 服务获取 AI 回复
       try {
+        const aiResponse = await langchainClient.sendMessage({
+          message: content,
+          conversation_id: currentConversation.id,
+          user_id: user.id,
+        });
+
+        // 保存 AI 回复
         const { data: aiMessage, error: aiError } = await supabase
           .from('messages')
           .insert({
             conversation_id: currentConversation.id,
-            content: '这是一个模拟的 AI 回复',
+            content: aiResponse.content,
             is_user: false
           })
           .select()
@@ -256,12 +269,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
           messageError: null
         }));
       } catch (error: any) {
+        console.error('AI 响应失败:', error);
         // 如果 AI 回复失败，保存一个错误消息
         const { data: errorAiMessage, error: saveError } = await supabase
           .from('messages')
           .insert({
             conversation_id: currentConversation.id,
-            content: '抱歉，处理您的请求时出现了错误。',
+            content: error.message || '抱歉，AI 服务暂时不可用，请稍后重试。',
             is_user: false
           })
           .select()
