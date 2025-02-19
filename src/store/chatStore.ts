@@ -44,7 +44,7 @@ const MESSAGES_PER_PAGE = 20;
 const normalizeMessage = (message: any): Message => ({
   id: message.id,
   content: message.content,
-  isUser: message.role === 'user',
+  isUser: message.is_user,
   createdAt: message.created_at,
 });
 
@@ -220,19 +220,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, isAiResponding: true });
 
       // 保存用户消息
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const { data: userMessage, error: userError } = await withSupabaseTimeout<PostgrestResponse<any>>(
-        supabase
-          .from('messages')
-          .insert({
-            conversation_id: currentConversation.id,
-            content,
-            role: 'user',
-            user_id: currentUser?.id,  
-          })
-          .select()
-          .single()
-      );
+      const { data: userMessage, error: userError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: currentConversation.id,
+          content,
+          is_user: true
+        })
+        .select()
+        .single();
 
       if (userError) throw userError;
 
@@ -242,17 +238,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // 保存 AI 回复
       try {
-        const { data: aiMessage, error: aiError } = await withSupabaseTimeout<PostgrestResponse<any>>(
-          supabase
-            .from('messages')
-            .insert({
-              conversation_id: currentConversation.id,
-              content: '这是一个模拟的 AI 回复',
-              role: 'assistant'
-            })
-            .select()
-            .single()
-        );
+        const { data: aiMessage, error: aiError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: currentConversation.id,
+            content: '这是一个模拟的 AI 回复',
+            is_user: false
+          })
+          .select()
+          .single();
 
         if (aiError) throw aiError;
 
@@ -263,33 +257,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
       } catch (error: any) {
         // 如果 AI 回复失败，保存一个错误消息
-        const { data: errorAiMessage, error: saveError } = await withSupabaseTimeout<PostgrestResponse<any>>(
-          supabase
-            .from('messages')
-            .insert({
-              conversation_id: currentConversation.id,
-              content: '抱歉，处理您的请求时出现了错误。',
-              role: 'assistant',
-              error: error.message
-            })
-            .select()
-            .single()
-        );
+        const { data: errorAiMessage, error: saveError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: currentConversation.id,
+            content: '抱歉，处理您的请求时出现了错误。',
+            is_user: false
+          })
+          .select()
+          .single();
 
         if (!saveError) {
           set(state => ({
             messages: [...state.messages, normalizeMessage(errorAiMessage)],
-            isAiResponding: false,
-            messageError: null
+            messageError: error.message
           }));
         }
-
         throw error;
       }
     } catch (error: any) {
       console.error('发送消息失败:', error);
-      set({ loading: false, isAiResponding: false, messageError: error.message });
+      set({ messageError: error.message });
       throw error;
+    } finally {
+      set({ loading: false, isAiResponding: false });
     }
   },
 
