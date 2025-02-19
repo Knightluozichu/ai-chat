@@ -89,7 +89,7 @@ function App() {
             <Route path="/practice" element={<Practice />} />
           </Route>
 
-          {/* AI助手路由 - 独立布局 */}
+          {/* 采购助手路由 - 独立布局 */}
           <Route
             path="/ai-assistant"
             element={

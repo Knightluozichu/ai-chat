@@ -41,7 +41,7 @@ export function ChatMessages() {
         >
           <Bot className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-medium mb-2">开始新的对话</h3>
-          <p>发送消息开始与AI助手交谈</p>
+          <p>发送消息开始与采购助手交谈</p>
         </motion.div>
       </div>
     );

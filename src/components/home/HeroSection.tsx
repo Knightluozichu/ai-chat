@@ -17,7 +17,7 @@ export const HeroSection = () => {
           </h1>
           
           <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-            在这里，你可以与AI助手进行智能对话，阅读前沿技术文章，
+            在这里，你可以与采购助手进行智能对话，阅读前沿技术文章，
             探索人工智能的最新发展。让我们一起开启AI之旅。
           </p>
           
@@ -43,7 +43,7 @@ export const HeroSection = () => {
             {[
               {
                 title: '智能对话',
-                description: '与AI助手进行自然、流畅的对话，获取专业解答'
+                description: '与采购助手进行自然、流畅的对话，获取专业解答'
               },
               {
                 title: '技术博客',
