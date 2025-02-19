@@ -139,7 +139,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const conversation = normalizeConversation(insertedData);
       set(state => ({
         conversations: [conversation, ...state.conversations],
-        currentConversation: conversation
+        currentConversation: conversation,
+        messages: [],  // 清空消息列表
+        hasMore: false // 重置加载更多状态
       }));
     } catch (error: any) {
       console.error('创建会话失败:', error);
