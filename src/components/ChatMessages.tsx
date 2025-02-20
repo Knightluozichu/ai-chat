@@ -4,6 +4,8 @@ import { formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function ChatMessages() {
   const { messages = [], isAiResponding, messageError } = useChatStore();
@@ -78,7 +80,29 @@ export function ChatMessages() {
                     : 'bg-gray-100 text-gray-900 rounded-tl-none'
                 }`}
               >
-                <div className="whitespace-pre-wrap break-words">{message.content}</div>
+                <div className={`whitespace-pre-wrap break-words prose dark:prose-invert ${
+                  message.is_user ? 'prose-white' : ''
+                }`}>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      table: ({ node, ...props }) => (
+                        <table className="border-collapse border border-gray-300 my-2" {...props} />
+                      ),
+                      thead: ({ node, ...props }) => (
+                        <thead className="bg-gray-100" {...props} />
+                      ),
+                      th: ({ node, ...props }) => (
+                        <th className="border border-gray-300 px-4 py-2" {...props} />
+                      ),
+                      td: ({ node, ...props }) => (
+                        <td className="border border-gray-300 px-4 py-2" {...props} />
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
               </div>
               <span className="text-xs text-gray-500 mt-1 px-2">
                 {formatMessageTime(message.created_at)}
