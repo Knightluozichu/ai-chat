@@ -140,7 +140,7 @@ export const FilePreview = ({ filePath }: FilePreviewProps) => {
   // Markdown 预览
   if (ext === 'md') {
     return (
-      <div className="prose dark:prose-invert max-w-none p-6">
+      <div className="prose prose-slate max-w-none p-6 [&>*]:text-gray-900 dark:[&>*]:text-gray-100 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_strong]:text-gray-900 dark:[&_strong]:text-gray-100 [&_code]:text-gray-900 dark:[&_code]:text-gray-100">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
@@ -162,7 +162,7 @@ export const FilePreview = ({ filePath }: FilePreviewProps) => {
 
   // 其他文件类型 - 提供下载选项
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
+    <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500 dark:text-gray-400">
       <FileText className="w-16 h-16 mb-4" />
       <p className="mb-4">{content}</p>
       <button
