@@ -38,6 +38,8 @@ interface ChatState {
   clearState: () => void;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
+  regenerateMessage: (messageId: string) => Promise<void>;
 }
 
 const MESSAGES_PER_PAGE = 20;
@@ -373,5 +375,133 @@ export const useChatStore = create<ChatState>((set, get) => ({
       console.error('删除会话失败:', error);
       throw error;
     }
-  }
+  },
+
+  deleteMessage: async (messageId: string) => {
+    const state = get();
+    const { currentConversation, messages } = state;
+    if (!currentConversation) return;
+
+    try {
+      // Find the message and its index
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex === -1) return;
+      
+      const message = messages[messageIndex];
+      const isLastMessage = messageIndex === messages.length - 1;
+      
+      // Delete from database
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+      
+      if (error) throw error;
+
+      // If it's an AI message and not the last one, we need to ensure conversation continuity
+      if (!message.is_user && !isLastMessage) {
+        // Delete all subsequent messages to maintain conversation coherence
+        const subsequentMessages = messages.slice(messageIndex + 1);
+        await Promise.all(
+          subsequentMessages.map(msg =>
+            supabase.from('messages').delete().eq('id', msg.id)
+          )
+        );
+        
+        // Update local state
+        set({
+          messages: messages.slice(0, messageIndex),
+          messageError: null
+        });
+      } else {
+        // Just delete the single message
+        set({
+          messages: messages.filter(m => m.id !== messageId),
+          messageError: null
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      set({ messageError: '删除消息失败' });
+    }
+  },
+
+  regenerateMessage: async (messageId: string) => {
+    const state = get();
+    const { currentConversation, messages } = state;
+    if (!currentConversation) return;
+
+    try {
+      // Find the message and its index
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex === -1) return;
+
+      const message = messages[messageIndex];
+      if (message.is_user) return; // Only AI messages can be regenerated
+
+      // Delete the current message and all subsequent messages
+      const messagesToDelete = messages.slice(messageIndex);
+      await Promise.all(
+        messagesToDelete.map(msg =>
+          supabase.from('messages').delete().eq('id', msg.id)
+        )
+      );
+
+      // Get the previous user message for context
+      const previousUserMessage = messages
+        .slice(0, messageIndex)
+        .reverse()
+        .find(m => m.is_user);
+
+      if (!previousUserMessage) return;
+
+      // Update local state to remove deleted messages
+      set({
+        messages: messages.slice(0, messageIndex),
+        isAiResponding: true,
+        messageError: null
+      });
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('未登录用户');
+
+      // Generate new AI response
+      const aiResponse = await langchainClient.sendMessage({
+        message: previousUserMessage.content,
+        conversation_id: currentConversation.id,
+        user_id: user.id
+      });
+
+      if (!aiResponse || aiResponse.error) {
+        throw new Error(aiResponse?.error || '生成回答失败');
+      }
+
+      // Save new AI message to database
+      const { data: newMessage, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: currentConversation.id,
+          content: aiResponse.content,
+          is_user: false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state with new message
+      set(state => ({
+        messages: [...state.messages, normalizeMessage(newMessage)],
+        isAiResponding: false,
+        messageError: null
+      }));
+    } catch (error) {
+      console.error('Error regenerating message:', error);
+      set({
+        isAiResponding: false,
+        messageError: '重新生成回答失败'
+      });
+    }
+  },
 }));

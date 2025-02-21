@@ -1,15 +1,23 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useChatStore } from '../store/chatStore';
 import { formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, Copy, RefreshCw, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export function ChatMessages() {
-  const { messages = [], isAiResponding, messageError } = useChatStore();
+  const { 
+    messages = [], 
+    isAiResponding, 
+    messageError,
+    deleteMessage,
+    regenerateMessage 
+  } = useChatStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [copyState, setCopyState] = useState<{[key: string]: boolean}>({});
+  const [deleteState, setDeleteState] = useState<{[key: string]: boolean}>({});
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,6 +38,31 @@ export function ChatMessages() {
       return formatDistanceToNow(date, { locale: zhCN, addSuffix: true });
     } catch (error) {
       return '刚刚';
+    }
+  };
+
+  const handleCopy = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopyState(prev => ({ ...prev, [messageId]: true }));
+      setTimeout(() => {
+        setCopyState(prev => ({ ...prev, [messageId]: false }));
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  const handleRegenerate = async (messageId: string) => {
+    await regenerateMessage(messageId);
+  };
+
+  const handleDelete = async (messageId: string) => {
+    setDeleteState(prev => ({ ...prev, [messageId]: true }));
+    try {
+      await deleteMessage(messageId);
+    } finally {
+      setDeleteState(prev => ({ ...prev, [messageId]: false }));
     }
   };
 
@@ -104,9 +137,46 @@ export function ChatMessages() {
                   </ReactMarkdown>
                 </div>
               </div>
-              <span className="text-xs text-gray-500 mt-1 px-2">
-                {formatMessageTime(message.created_at)}
-              </span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                <span>{formatMessageTime(message.created_at)}</span>
+                {!message.is_user && (
+                  <div className="flex items-center gap-2 ml-2">
+                    <button 
+                      className={`p-1 hover:bg-gray-100 rounded-full transition-colors relative ${
+                        copyState[message.id] ? 'bg-green-100 text-green-600' : ''
+                      }`}
+                      title={copyState[message.id] ? '已复制' : '复制'}
+                      onClick={() => handleCopy(message.id, message.content)}
+                    >
+                      {copyState[message.id] ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button 
+                      className={`p-1 hover:bg-gray-100 rounded-full transition-colors ${
+                        isAiResponding ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title="重新生成"
+                      onClick={() => handleRegenerate(message.id)}
+                      disabled={isAiResponding}
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isAiResponding ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button 
+                      className={`p-1 hover:bg-gray-100 hover:text-red-600 rounded-full transition-colors ${
+                        deleteState[message.id] || isAiResponding ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title={deleteState[message.id] ? '删除中...' : '删除'}
+                      onClick={() => handleDelete(message.id)}
+                      disabled={deleteState[message.id] || isAiResponding}
+                    >
+                      <Trash2 className={`w-4 h-4 ${deleteState[message.id] ? 'text-red-600' : ''}`} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         ))}
