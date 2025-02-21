@@ -4,6 +4,7 @@ import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChatSettings } from './ChatSettings';
 
 export function ChatSidebar() {
   const { user } = useAuthStore();
@@ -230,6 +231,7 @@ export function ChatSidebar() {
           ))}
         </AnimatePresence>
       </div>
+      <ChatSettings />
     </div>
   );
 }

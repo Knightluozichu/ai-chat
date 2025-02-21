@@ -22,11 +22,19 @@ interface DocumentStatus {
   totalChunks?: number;
 }
 
+interface Settings {
+  modelProvider?: 'deepseek' | 'openai';
+  systemPrompt?: string;
+  useWebSearch?: boolean;
+  useIntentDetection?: boolean;
+}
+
 const LANGCHAIN_API = {
   chat: '/api/chat',
   history: '/api/chat/history',
   processDocument: '/api/documents/process',
-  documentStatus: '/api/documents/{file_id}/status'
+  documentStatus: '/api/documents/{file_id}/status',
+  settings: '/api/settings'
 };
 
 class LangChainClient {
@@ -182,6 +190,48 @@ class LangChainClient {
       console.error('获取历史记录失败:', error);
       throw new Error(error.message || '获取聊天历史失败，请稍后重试');
     }
+  }
+
+  async getSettings(): Promise<Settings> {
+    try {
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}${LANGCHAIN_API.settings}`,
+        {
+          method: 'GET',
+        }
+      );
+      
+      return response.json();
+    } catch (error: any) {
+      console.error('获取设置失败:', error);
+      throw new Error(error.message || '获取设置失败，请稍后重试');
+    }
+  }
+
+  async updateSettings(settings: Settings): Promise<void> {
+    try {
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}${LANGCHAIN_API.settings}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(settings),
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error: any) {
+      console.error('更新设置失败:', error);
+      throw new Error(error.message || '更新设置失败，请稍后重试');
+    }
+  }
+
+  getApiUrl(endpoint: string): string {
+    return `${this.baseUrl}${endpoint}`;
   }
 }
 
