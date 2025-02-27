@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/layout/Layout';
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -33,13 +33,16 @@ const LoadingSpinner = () => (
 // 需要登录的路由
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuthStore();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (!user) {
-    return <Navigate to="/dashboard/login" replace />;
+    // 将当前路径作为重定向参数
+    const redirectPath = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/dashboard/login?redirect=${redirectPath}`} replace />;
   }
 
   return <>{children}</>;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Layout, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -9,6 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,7 +19,11 @@ const Login = () => {
 
     try {
       await signIn(email, password);
-      navigate('/dashboard');
+      // 获取重定向路径
+      const params = new URLSearchParams(location.search);
+      const redirectTo = params.get('redirect');
+      // 如果有重定向路径，则跳转到该路径，否则跳转到后台首页
+      navigate(redirectTo ? decodeURIComponent(redirectTo) : '/dashboard');
     } catch (err: any) {
       setError(err.message || '登录失败，请重试');
     } finally {
