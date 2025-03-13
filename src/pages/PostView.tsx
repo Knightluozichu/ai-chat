@@ -5,8 +5,8 @@ import { Container } from '../components/layout/Container';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { supabase } from '../lib/supabase';
-import MDEditor from '@uiw/react-md-editor';
 import { usePostStore } from '../store/postStore';
+import MarkdownWithMermaid from '../components/markdown/MarkdownWithMermaid';
 
 export default function PostView() {
   const { slug } = useParams<{ slug: string }>();
@@ -158,9 +158,9 @@ export default function PostView() {
 
         {/* 文章内容 */}
         <div className="prose prose-lg dark:prose-invert max-w-none">
-          <MDEditor.Markdown source={currentViewPost.content} />
+          <MarkdownWithMermaid content={currentViewPost.content} />
         </div>
       </article>
     </Container>
   );
-} 
+}

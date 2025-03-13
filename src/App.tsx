@@ -22,6 +22,7 @@ const DashboardPosts = lazy(() => import('./pages/dashboard/Posts'));
 const DashboardUsers = lazy(() => import('./pages/dashboard/Users'));
 const DashboardSettings = lazy(() => import('./pages/dashboard/Settings'));
 const PostEdit = lazy(() => import('./pages/dashboard/PostEdit'));
+const PracticeManagement = lazy(() => import('./pages/dashboard/PracticeManagement'));
 
 // 加载动画组件
 const LoadingSpinner = () => (
@@ -120,6 +121,7 @@ function App() {
               <Route path="users" element={<DashboardUsers />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="posts/:id/edit" element={<PostEdit />} />
+              <Route path="practice" element={<PracticeManagement />} />
             </Route>
           </Route>
         </Routes>

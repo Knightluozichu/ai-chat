@@ -1,24 +1,37 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Moon, Sun, MessageSquare } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 import { Container } from './Container';
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  requireAuth?: boolean;
+}
+
+const navigation: NavigationItem[] = [
   { name: '首页', href: '/' },
   { name: '文章', href: '/posts' },
   { name: '阿飞加练', href: '/practice' },
   { name: '采购助手', href: '/ai-assistant' },
   { name: '关于', href: '/about' },
+  { name: '后台', href: '/dashboard', requireAuth: true },
 ];
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuthStore();
   const [isDark, setIsDark] = useState(false);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle('dark');
   };
+
+  const filteredNavigation = navigation.filter(item => 
+    !item.requireAuth || (item.requireAuth && user)
+  );
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
@@ -33,7 +46,7 @@ export const Header = () => {
 
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navigation.map((item) => (
+            {filteredNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -74,7 +87,7 @@ export const Header = () => {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="space-y-1 px-2 pb-3 pt-2">
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}

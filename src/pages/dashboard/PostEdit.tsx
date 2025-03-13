@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, Loader2, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownEditor from '../../components/markdown/MarkdownEditor';
+import MarkdownPreview from '../../components/markdown/MarkdownPreview';
 
 const PostEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -10,9 +11,7 @@ const PostEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [post, setPost] = useState<any>(null);
-  const [isDarkMode, setIsDarkMode] = useState(
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [previewMode, setPreviewMode] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -23,15 +22,6 @@ const PostEdit = () => {
     seo_title: '',
     seo_description: ''
   });
-
-  // 监听系统主题变化
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -77,8 +67,8 @@ const PostEdit = () => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleContentChange = (value?: string) => {
-    setFormData(prev => ({ ...prev, content: value || '' }));
+  const handleContentChange = (value: string) => {
+    setFormData(prev => ({ ...prev, content: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,7 +113,7 @@ const PostEdit = () => {
   }
 
   return (
-    <div className={`max-w-5xl mx-auto px-4 py-6 ${isDarkMode ? 'dark' : ''}`}>
+    <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate('/dashboard/posts')}
@@ -135,11 +125,11 @@ const PostEdit = () => {
         <div className="flex items-center space-x-4">
           <button
             type="button"
-            onClick={() => window.open(`/posts/${post.slug}`, '_blank')}
+            onClick={() => setPreviewMode(!previewMode)}
             className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <Eye className="w-4 h-4 mr-2" />
-            预览
+            {previewMode ? '编辑' : '预览'}
           </button>
           <button
             onClick={handleSubmit}
@@ -206,17 +196,17 @@ const PostEdit = () => {
             内容
           </label>
           <div className="prose max-w-none">
-            <MDEditor
-              value={formData.content}
-              onChange={handleContentChange}
-              preview="edit"
-              height={500}
-              className="w-full"
-              hideToolbar={false}
-              enableScroll={true}
-              data-color-mode={isDarkMode ? 'dark' : 'light'}
-              highlightEnable={true}
-            />
+            {previewMode ? (
+              <div className="border rounded-lg p-4 bg-white dark:bg-gray-800">
+                <MarkdownPreview content={formData.content} />
+              </div>
+            ) : (
+              <MarkdownEditor
+                value={formData.content}
+                onChange={handleContentChange}
+                height={500}
+              />
+            )}
           </div>
         </div>
 

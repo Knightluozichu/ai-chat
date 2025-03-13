@@ -6,6 +6,7 @@ import {
   Users, 
   Settings, 
   LogOut,
+  Book,
   Menu,
   X,
   ChevronDown
@@ -25,6 +26,12 @@ const DashboardLayout = () => {
       name: '文章管理', 
       href: '/dashboard/posts', 
       icon: FileText,
+      show: () => can('manage_posts')
+    },
+    {
+      name: '阿飞加练管理',
+      href: '/dashboard/practice',
+      icon: Book,
       show: () => can('manage_posts')
     },
     { 

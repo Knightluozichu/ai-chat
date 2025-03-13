@@ -1,52 +1,27 @@
-@import 'prismjs/themes/prism.css';
-/* 或者使用暗色主题 */
-@import 'prismjs/themes/prism-tomorrow.css';
-@import '@uiw/react-md-editor/markdown-editor.css';
-@import '@uiw/react-markdown-preview/markdown.css';
-@import './styles/markdown-editor.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* 代码高亮样式 */
-.wmde-markdown pre {
-  background-color: #1e1e1e;
-  border-radius: 4px;
-  padding: 16px;
-  margin: 8px 0;
+.prose pre {
+  @apply bg-gray-100 dark:bg-gray-800 rounded-lg p-4 my-2;
 }
 
-.wmde-markdown code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-  font-size: 14px;
-  line-height: 1.5;
+.prose code {
+  @apply font-mono text-sm leading-relaxed;
 }
 
-/* 语法高亮颜色 */
-.wmde-markdown .token.comment { color: #6a9955; }
-.wmde-markdown .token.string { color: #ce9178; }
-.wmde-markdown .token.number { color: #b5cea8; }
-.wmde-markdown .token.keyword { color: #569cd6; }
-.wmde-markdown .token.function { color: #dcdcaa; }
-.wmde-markdown .token.class-name { color: #4ec9b0; }
-.wmde-markdown .token.operator { color: #d4d4d4; }
-.wmde-markdown .token.punctuation { color: #d4d4d4; }
+/* 亮色主题语法高亮 */
+.prose .token.comment { @apply text-gray-500; }
+.prose .token.string { @apply text-blue-700 dark:text-blue-300; }
+.prose .token.number { @apply text-blue-600 dark:text-blue-400; }
+.prose .token.keyword { @apply text-red-600 dark:text-red-400; }
+.prose .token.function { @apply text-purple-600 dark:text-purple-400; }
+.prose .token.class-name { @apply text-purple-600 dark:text-purple-400; }
+.prose .token.operator { @apply text-blue-600 dark:text-blue-400; }
+.prose .token.punctuation { @apply text-gray-800 dark:text-gray-200; }
 
-/* 亮色主题 */
-[data-color-mode="light"] .wmde-markdown pre {
-  background-color: #f6f8fa;
-}
-
-[data-color-mode="light"] .wmde-markdown .token.comment { color: #6a737d; }
-[data-color-mode="light"] .wmde-markdown .token.string { color: #032f62; }
-[data-color-mode="light"] .wmde-markdown .token.number { color: #005cc5; }
-[data-color-mode="light"] .wmde-markdown .token.keyword { color: #d73a49; }
-[data-color-mode="light"] .wmde-markdown .token.function { color: #6f42c1; }
-[data-color-mode="light"] .wmde-markdown .token.class-name { color: #6f42c1; }
-[data-color-mode="light"] .wmde-markdown .token.operator { color: #005cc5; }
-[data-color-mode="light"] .wmde-markdown .token.punctuation { color: #24292e; }
-
+/* 动画效果 */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -85,10 +60,47 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  @apply bg-gray-300 dark:bg-gray-600 rounded-sm;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Markdown编辑器样式 */
+.markdown-editor {
+  @apply border rounded-lg overflow-hidden bg-white dark:bg-gray-800;
+}
+
+.markdown-editor .toolbar {
+  @apply flex items-center gap-1 p-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800;
+}
+
+.markdown-editor .toolbar button {
+  @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300;
+}
+
+.markdown-editor .editor-content {
+  @apply grid grid-cols-2 min-h-[300px];
+}
+
+.markdown-editor textarea {
+  @apply p-4 w-full h-full resize-none border-none focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
+}
+
+.markdown-editor .preview {
+  @apply border-l dark:border-gray-700 p-4 overflow-auto bg-white dark:bg-gray-800;
+}
+
+/* Mermaid图表样式 */
+.mermaid {
+  @apply my-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm;
+}
+
+.mermaid svg {
+  @apply max-w-full h-auto mx-auto;
+}
+
+.dark .mermaid svg {
+  filter: brightness(0.9);
 }

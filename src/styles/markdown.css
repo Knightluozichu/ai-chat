@@ -1,0 +1,106 @@
+/* Markdown样式 */
+.prose .mermaid {
+  @apply my-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm transition-colors duration-200;
+}
+
+.prose .mermaid svg {
+  @apply max-w-full h-auto mx-auto;
+}
+
+.prose .mermaid.dark svg {
+  filter: brightness(0.9);
+}
+
+/* 代码块样式 */
+.prose pre {
+  @apply p-4 rounded-lg bg-gray-50 dark:bg-gray-800 overflow-x-auto;
+}
+
+.prose code {
+  @apply px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200;
+}
+
+.prose pre code {
+  @apply p-0 bg-transparent;
+}
+
+/* Markdown基础样式 */
+.prose {
+  @apply text-gray-800 dark:text-gray-200;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  @apply font-bold text-gray-900 dark:text-gray-100 my-4;
+}
+
+.prose h1 {
+  @apply text-3xl;
+}
+
+.prose h2 {
+  @apply text-2xl;
+}
+
+.prose h3 {
+  @apply text-xl;
+}
+
+.prose p {
+  @apply my-4;
+}
+
+.prose ul,
+.prose ol {
+  @apply my-4 pl-6;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose blockquote {
+  @apply pl-4 border-l-4 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 my-4;
+}
+
+.prose hr {
+  @apply my-8 border-gray-200 dark:border-gray-700;
+}
+
+.prose a {
+  @apply text-blue-600 dark:text-blue-400 hover:underline;
+}
+
+.prose table {
+  @apply w-full my-6 border-collapse;
+}
+
+.prose th,
+.prose td {
+  @apply border border-gray-300 dark:border-gray-600 px-4 py-2;
+}
+
+.prose th {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.prose tr:nth-child(even) {
+  @apply bg-gray-50 dark:bg-gray-800/50;
+}
+
+.prose tr:hover {
+  @apply bg-gray-100 dark:bg-gray-700/50;
+}
+
+/* 图片样式 */
+.prose img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
