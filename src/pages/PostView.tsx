@@ -139,15 +139,13 @@ export default function PostView() {
         </div>
 
         {/* 文章封面图 */}
-        {currentViewPost.cover_image && (
           <div className="mb-8 rounded-lg overflow-hidden">
             <img
-              src={currentViewPost.cover_image}
+              src={currentViewPost.cover_image || "/assets/doc_pic.jpg"}
               alt={currentViewPost.title}
               className="w-full h-[400px] object-cover"
             />
           </div>
-        )}
 
         {/* 文章摘要 */}
         {currentViewPost.excerpt && (

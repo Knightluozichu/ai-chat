@@ -108,7 +108,7 @@ export default function Posts() {
                   <div className="aspect-[16/9] w-full overflow-hidden">
                     <img
                       className="w-full h-full object-cover"
-                      src={post.cover_image || '/assets/doc_default.png'}
+                      src={post.cover_image || '/assets/doc_pic.jpg'}
                       alt={post.title}
                     />
                   </div>
