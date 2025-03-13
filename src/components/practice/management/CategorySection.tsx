@@ -27,7 +27,7 @@ interface CategorySectionProps {
 }
 
 const CategorySection = ({ onCategorySelect }: CategorySectionProps) => {
-  const { categories, loadingCategories, createCategory, deleteCategory, updateCategoryOrder } = usePracticeManagementStore();
+  const { categories, loadingCategories, deleteCategory, updateCategoryOrder } = usePracticeManagementStore();
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<number | null>(null);
@@ -59,6 +59,9 @@ const CategorySection = ({ onCategorySelect }: CategorySectionProps) => {
       
       try {
         await updateCategoryOrder(active.id as number, newIndex);
+        // 使用 arrayMove 更新本地状态
+        const newCategories = arrayMove(categories, oldIndex, newIndex);
+        usePracticeManagementStore.setState({ categories: newCategories });
       } catch (error) {
         console.error('更新分类顺序失败:', error);
       }
@@ -93,7 +96,7 @@ const CategorySection = ({ onCategorySelect }: CategorySectionProps) => {
         style={style}
         className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg ${
           isDragging ? 'border-2 border-blue-500' : ''
-        }`}
+        } ${activeId === category.id ? 'ring-2 ring-blue-400' : ''}`}
       >
         <div className="flex items-center space-x-4 flex-1">
           <button
