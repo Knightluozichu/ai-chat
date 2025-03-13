@@ -1,46 +1,53 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  darkMode: 'class',
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          DEFAULT: 'var(--color-primary)',
-          hover: 'var(--color-primary-hover)',
-        },
-      },
-      borderRadius: {
-        DEFAULT: 'var(--border-radius)',
-      },
-      fontSize: {
-        base: 'var(--font-size-base)',
-      },
       typography: {
         DEFAULT: {
           css: {
-            maxWidth: '65ch',
-            color: 'inherit',
-            a: {
-              color: 'inherit',
+            maxWidth: '100ch',
+            color: 'var(--tw-prose-body)',
+            '[class~="lead"]': {
+              color: 'var(--tw-prose-lead)'
+            },
+            'a': {
+              color: 'var(--tw-prose-links)',
               textDecoration: 'underline',
+              fontWeight: '500'
+            },
+            'strong': {
+              color: 'var(--tw-prose-bold)',
+              fontWeight: '600'
+            },
+            'code': {
+              color: 'var(--tw-prose-code)',
+              fontWeight: '600'
+            },
+            'pre': {
+              color: 'var(--tw-prose-pre-code)',
+              backgroundColor: 'var(--tw-prose-pre-bg)',
+              overflowX: 'auto',
+              fontWeight: '400'
+            },
+            'blockquote': {
               fontWeight: '500',
-            },
-            strong: {
-              color: 'inherit',
-              fontWeight: '600',
-            },
-            code: {
-              color: 'inherit',
-              fontWeight: '400',
-            },
-          },
-        },
-      },
-    },
+              fontStyle: 'italic',
+              color: 'var(--tw-prose-quotes)',
+              borderLeftWidth: '0.25rem',
+              borderLeftColor: 'var(--tw-prose-quote-borders)',
+              quotes: '"\\201C""\\201D""\\2018""\\2019"'
+            }
+          }
+        }
+      }
+    }
   },
+  darkMode: 'class',
   plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/aspect-ratio'),
-  ],
-};
+    require('@tailwindcss/typography')
+  ]
+}
