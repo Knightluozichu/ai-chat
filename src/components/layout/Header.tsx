@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun, MessageSquare } from 'lucide-react';
+import { Menu, X, Moon, Sun, MessageSquare, Wrench } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { Container } from './Container';
 
@@ -15,6 +15,7 @@ const navigation: NavigationItem[] = [
   { name: '文章', href: '/posts' },
   { name: '阿飞加练', href: '/practice' },
   { name: '采购助手', href: '/ai-assistant' },
+  { name: '工具', href: '/tools' },
   { name: '关于', href: '/about' },
   { name: '后台', href: '/dashboard', requireAuth: true },
 ];

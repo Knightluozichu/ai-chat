@@ -13,6 +13,7 @@ const PostView = lazy(() => import('./pages/PostView'));
 const About = lazy(() => import('./pages/About'));
 const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const Practice = lazy(() => import('./pages/Practice'));
+const Tools = lazy(() => import('./pages/Tools'));
 
 // 后台页面
 const DashboardHome = lazy(() => import('./pages/dashboard/Home'));
@@ -91,6 +92,7 @@ function App() {
             <Route path="/posts/:slug" element={<PostView />} />
             <Route path="/about" element={<About />} />
             <Route path="/practice" element={<Practice />} />
+            <Route path="/tools" element={<Tools />} />
           </Route>
 
           {/* 采购助手路由 - 独立布局 */}
